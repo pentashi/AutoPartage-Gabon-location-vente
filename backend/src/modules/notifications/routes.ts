@@ -17,7 +17,8 @@ const notificationsRouter = Router();
 notificationsRouter.get(
   "/",
   asyncHandler(async (req, res) => {
-    const isAdminView = [Role.SUPER_ADMIN, Role.ADMIN, Role.ACCOUNTANT].includes(req.auth!.role);
+    const adminRoles: Role[] = [Role.SUPER_ADMIN, Role.ADMIN, Role.ACCOUNTANT];
+    const isAdminView = adminRoles.includes(req.auth!.role);
     const userIdQuery = req.query.userId as string | undefined;
     const unreadOnly = req.query.unreadOnly === "true";
     const priority = req.query.priority as NotificationPriority | undefined;
