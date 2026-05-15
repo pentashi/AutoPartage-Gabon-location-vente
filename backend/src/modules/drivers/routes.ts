@@ -26,8 +26,9 @@ driversRouter.get(
 driversRouter.get(
   "/:id",
   asyncHandler(async (req, res) => {
+    const id = String(req.params.id);
     const driver = await prisma.driver.findUnique({
-      where: { id: req.params.id },
+      where: { id },
       include: {
         user: true,
         contracts: { include: { vehicle: true, payments: true } },
@@ -50,8 +51,9 @@ driversRouter.post(
 driversRouter.put(
   "/:id",
   asyncHandler(async (req, res) => {
+    const id = String(req.params.id);
     const payload = updateSchema.parse(req.body);
-    const updated = await prisma.driver.update({ where: { id: req.params.id }, data: payload });
+    const updated = await prisma.driver.update({ where: { id }, data: payload });
     res.json(updated);
   })
 );
@@ -59,7 +61,8 @@ driversRouter.put(
 driversRouter.delete(
   "/:id",
   asyncHandler(async (req, res) => {
-    await prisma.driver.delete({ where: { id: req.params.id } });
+    const id = String(req.params.id);
+    await prisma.driver.delete({ where: { id } });
     res.status(204).send();
   })
 );

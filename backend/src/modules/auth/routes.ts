@@ -1,6 +1,6 @@
 import { Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { Router } from "express";
+import { Response, Router } from "express";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { env } from "../../config/env";
@@ -9,19 +9,19 @@ import { authenticate } from "../../middleware/auth";
 import { asyncHandler, HttpError } from "../../utils/http";
 
 const loginSchema = z.object({
-  email: z.email(),
+  email: z.string().email(),
   password: z.string().min(8)
 });
 
 const authRouter = Router();
 
 const signAccessToken = (userId: string, role: Role) =>
-  jwt.sign({ sub: userId, role }, env.JWT_ACCESS_SECRET, { expiresIn: env.ACCESS_TOKEN_TTL });
+  jwt.sign({ sub: userId, role }, env.JWT_ACCESS_SECRET, { expiresIn: env.ACCESS_TOKEN_TTL } as any);
 
 const signRefreshToken = (userId: string, role: Role) =>
-  jwt.sign({ sub: userId, role }, env.JWT_REFRESH_SECRET, { expiresIn: env.REFRESH_TOKEN_TTL });
+  jwt.sign({ sub: userId, role }, env.JWT_REFRESH_SECRET, { expiresIn: env.REFRESH_TOKEN_TTL } as any);
 
-const applyAuthCookies = (res: Parameters<typeof authRouter.post>[1], accessToken: string, refreshToken: string) => {
+const applyAuthCookies = (res: Response, accessToken: string, refreshToken: string) => {
   const isProd = env.NODE_ENV === "production";
   const base = { httpOnly: true, secure: isProd, sameSite: "lax" as const };
 

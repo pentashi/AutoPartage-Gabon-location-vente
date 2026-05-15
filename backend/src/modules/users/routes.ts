@@ -6,10 +6,10 @@ import { prisma } from "../../config/prisma";
 import { asyncHandler } from "../../utils/http";
 
 const createUserSchema = z.object({
-  email: z.email(),
+  email: z.string().email(),
   fullName: z.string().min(2),
   password: z.string().min(8),
-  role: z.enum(Role)
+  role: z.nativeEnum(Role)
 });
 
 const updateUserSchema = createUserSchema.partial().omit({ password: true }).extend({
@@ -53,10 +53,11 @@ usersRouter.post(
 usersRouter.put(
   "/:id",
   asyncHandler(async (req, res) => {
+    const id = String(req.params.id);
     const payload = updateUserSchema.parse(req.body);
 
     const user = await prisma.user.update({
-      where: { id: req.params.id },
+      where: { id },
       data: {
         ...(payload.email ? { email: payload.email } : {}),
         ...(payload.fullName ? { fullName: payload.fullName } : {}),
@@ -74,7 +75,8 @@ usersRouter.put(
 usersRouter.delete(
   "/:id",
   asyncHandler(async (req, res) => {
-    await prisma.user.delete({ where: { id: req.params.id } });
+    const id = String(req.params.id);
+    await prisma.user.delete({ where: { id } });
     res.status(204).send();
   })
 );

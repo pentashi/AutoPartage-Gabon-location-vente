@@ -7,14 +7,14 @@ import { asyncHandler } from "../../utils/http";
 const createSchema = z.object({
   driverId: z.string(),
   vehicleId: z.string(),
-  type: z.enum(ContractType),
-  status: z.enum(ContractStatus).optional(),
+  type: z.nativeEnum(ContractType),
+  status: z.nativeEnum(ContractStatus).optional(),
   startDate: z.coerce.date(),
   endDate: z.coerce.date().optional(),
   monthlyAmount: z.number().positive(),
   unpaidThreshold: z.number().positive().optional(),
   terms: z.string().optional(),
-  pdfUrl: z.url().optional()
+  pdfUrl: z.string().url().optional()
 });
 
 const updateSchema = createSchema.partial();
@@ -35,8 +35,9 @@ contractsRouter.get(
 contractsRouter.get(
   "/:id",
   asyncHandler(async (req, res) => {
+    const id = String(req.params.id);
     const contract = await prisma.contract.findUnique({
-      where: { id: req.params.id },
+      where: { id },
       include: { driver: true, vehicle: true, payments: true }
     });
     res.json(contract);
@@ -64,9 +65,10 @@ contractsRouter.post(
 contractsRouter.put(
   "/:id",
   asyncHandler(async (req, res) => {
+    const id = String(req.params.id);
     const payload = updateSchema.parse(req.body);
     const updated = await prisma.contract.update({
-      where: { id: req.params.id },
+      where: { id },
       data: {
         ...(payload.driverId ? { driverId: payload.driverId } : {}),
         ...(payload.vehicleId ? { vehicleId: payload.vehicleId } : {}),
@@ -92,8 +94,9 @@ contractsRouter.put(
 contractsRouter.patch(
   "/:id/status",
   asyncHandler(async (req, res) => {
-    const { status } = z.object({ status: z.enum(ContractStatus) }).parse(req.body);
-    const updated = await prisma.contract.update({ where: { id: req.params.id }, data: { status } });
+    const id = String(req.params.id);
+    const { status } = z.object({ status: z.nativeEnum(ContractStatus) }).parse(req.body);
+    const updated = await prisma.contract.update({ where: { id }, data: { status } });
 
     if (status === ContractStatus.SUSPENDED) {
       await prisma.vehicle.update({
@@ -109,7 +112,8 @@ contractsRouter.patch(
 contractsRouter.delete(
   "/:id",
   asyncHandler(async (req, res) => {
-    await prisma.contract.delete({ where: { id: req.params.id } });
+    const id = String(req.params.id);
+    await prisma.contract.delete({ where: { id } });
     res.status(204).send();
   })
 );

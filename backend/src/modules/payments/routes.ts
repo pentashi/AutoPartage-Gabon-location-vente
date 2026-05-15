@@ -9,8 +9,8 @@ const createSchema = z.object({
   amount: z.number().positive(),
   dueDate: z.coerce.date(),
   paidAt: z.coerce.date().optional(),
-  method: z.enum(PaymentMethod).optional(),
-  status: z.enum(PaymentStatus).optional(),
+  method: z.nativeEnum(PaymentMethod).optional(),
+  status: z.nativeEnum(PaymentStatus).optional(),
   penaltyAmount: z.number().nonnegative().optional()
 });
 
@@ -69,9 +69,10 @@ paymentsRouter.post(
 paymentsRouter.put(
   "/:id",
   asyncHandler(async (req, res) => {
+    const id = String(req.params.id);
     const payload = updateSchema.parse(req.body);
     const updated = await prisma.payment.update({
-      where: { id: req.params.id },
+      where: { id },
       data: {
         ...(payload.contractId ? { contractId: payload.contractId } : {}),
         ...(payload.amount !== undefined ? { amount: new Prisma.Decimal(payload.amount) } : {}),
@@ -121,7 +122,8 @@ paymentsRouter.patch(
 paymentsRouter.delete(
   "/:id",
   asyncHandler(async (req, res) => {
-    await prisma.payment.delete({ where: { id: req.params.id } });
+    const id = String(req.params.id);
+    await prisma.payment.delete({ where: { id } });
     res.status(204).send();
   })
 );

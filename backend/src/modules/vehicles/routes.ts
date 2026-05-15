@@ -9,8 +9,8 @@ const createSchema = z.object({
   model: z.string().min(1),
   plateNumber: z.string().min(1),
   year: z.number().int().min(1990),
-  status: z.enum(VehicleStatus).optional(),
-  photoUrl: z.url().optional()
+  status: z.nativeEnum(VehicleStatus).optional(),
+  photoUrl: z.string().url().optional()
 });
 
 const updateSchema = createSchema.partial();
@@ -42,8 +42,9 @@ vehiclesRouter.get(
 vehiclesRouter.get(
   "/:id",
   asyncHandler(async (req, res) => {
+    const id = String(req.params.id);
     const vehicle = await prisma.vehicle.findUnique({
-      where: { id: req.params.id },
+      where: { id },
       include: { contracts: true, incidents: true }
     });
 
@@ -63,8 +64,9 @@ vehiclesRouter.post(
 vehiclesRouter.put(
   "/:id",
   asyncHandler(async (req, res) => {
+    const id = String(req.params.id);
     const payload = updateSchema.parse(req.body);
-    const updated = await prisma.vehicle.update({ where: { id: req.params.id }, data: payload });
+    const updated = await prisma.vehicle.update({ where: { id }, data: payload });
     res.json(updated);
   })
 );
@@ -72,8 +74,9 @@ vehiclesRouter.put(
 vehiclesRouter.patch(
   "/:id/status",
   asyncHandler(async (req, res) => {
-    const { status } = z.object({ status: z.enum(VehicleStatus) }).parse(req.body);
-    const updated = await prisma.vehicle.update({ where: { id: req.params.id }, data: { status } });
+    const id = String(req.params.id);
+    const { status } = z.object({ status: z.nativeEnum(VehicleStatus) }).parse(req.body);
+    const updated = await prisma.vehicle.update({ where: { id }, data: { status } });
     res.json(updated);
   })
 );
@@ -81,7 +84,8 @@ vehiclesRouter.patch(
 vehiclesRouter.delete(
   "/:id",
   asyncHandler(async (req, res) => {
-    await prisma.vehicle.delete({ where: { id: req.params.id } });
+    const id = String(req.params.id);
+    await prisma.vehicle.delete({ where: { id } });
     res.status(204).send();
   })
 );
