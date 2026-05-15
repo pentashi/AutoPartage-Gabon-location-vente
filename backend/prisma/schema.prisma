@@ -1,0 +1,163 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  ACCOUNTANT
+  DRIVER
+  GARAGE
+}
+
+enum VehicleStatus {
+  ACTIVE
+  IMMOBILIZED
+  MAINTENANCE
+}
+
+enum ContractType {
+  RENTAL
+  SALE
+}
+
+enum ContractStatus {
+  ACTIVE
+  LATE
+  SUSPENDED
+  TERMINATED
+}
+
+enum PaymentMethod {
+  CASH
+  MOBILE_MONEY
+  BANK_TRANSFER
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  OVERDUE
+}
+
+enum IncidentStatus {
+  OPEN
+  INVESTIGATING
+  RESOLVED
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  SMS
+  WHATSAPP
+}
+
+model User {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  fullName     String
+  passwordHash String
+  role         Role
+  isActive     Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  driver       Driver?
+  notifications Notification[]
+}
+
+model Driver {
+  id             String      @id @default(cuid())
+  userId         String?     @unique
+  user           User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  licenseNumber  String      @unique
+  cnssNumber     String?
+  cnamgsNumber   String?
+  riskScore      Float       @default(0)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  contracts      Contract[]
+  incidents      Incident[]
+}
+
+model Vehicle {
+  id           String        @id @default(cuid())
+  brand        String
+  model        String
+  plateNumber  String        @unique
+  year         Int
+  status       VehicleStatus @default(ACTIVE)
+  photoUrl     String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  contracts    Contract[]
+  incidents    Incident[]
+}
+
+model Contract {
+  id             String         @id @default(cuid())
+  driverId       String
+  vehicleId      String
+  type           ContractType
+  status         ContractStatus @default(ACTIVE)
+  startDate      DateTime
+  endDate        DateTime?
+  monthlyAmount  Decimal        @db.Decimal(12, 2)
+  unpaidThreshold Decimal?      @db.Decimal(12, 2)
+  terms          String?
+  pdfUrl         String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  driver         Driver         @relation(fields: [driverId], references: [id], onDelete: Restrict)
+  vehicle        Vehicle        @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
+  payments       Payment[]
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  contractId     String
+  amount         Decimal       @db.Decimal(12, 2)
+  paidAt         DateTime?
+  dueDate        DateTime
+  method         PaymentMethod?
+  status         PaymentStatus @default(PENDING)
+  penaltyAmount  Decimal?      @db.Decimal(12, 2)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  contract       Contract      @relation(fields: [contractId], references: [id], onDelete: Cascade)
+}
+
+model Incident {
+  id           String         @id @default(cuid())
+  driverId     String?
+  vehicleId    String?
+  title        String
+  description  String
+  status       IncidentStatus @default(OPEN)
+  occurredAt   DateTime
+  resolvedAt   DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  driver       Driver?        @relation(fields: [driverId], references: [id], onDelete: SetNull)
+  vehicle      Vehicle?       @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+}
+
+model Notification {
+  id         String              @id @default(cuid())
+  userId     String
+  title      String
+  message    String
+  channel    NotificationChannel @default(IN_APP)
+  isRead     Boolean             @default(false)
+  createdAt  DateTime            @default(now())
+
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
