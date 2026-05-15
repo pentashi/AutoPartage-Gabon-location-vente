@@ -9,6 +9,10 @@ export default function DashboardPage() {
   const { role } = useAuthStore();
 
   useEffect(() => {
+    if (!role) {
+      return;
+    }
+
     if (role === "SUPER_ADMIN") {
       router.replace("/dashboard/users");
       return;

@@ -2,10 +2,10 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import express from "express";
 import { Role } from "@prisma/client";
-import csurf from "csurf";
 import rateLimit from "express-rate-limit";
 import { env } from "./config/env";
 import { authenticate, authorize } from "./middleware/auth";
+import { csrfMiddleware } from "./middleware/csrf";
 import { errorMiddleware } from "./middleware/error";
 import { authRouter } from "./modules/auth/routes";
 import { contractsRouter } from "./modules/contracts/routes";
@@ -31,14 +31,6 @@ const authLimiter = rateLimit({
   legacyHeaders: false
 });
 
-const csrfProtection = csurf({
-  cookie: {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: isProd
-  }
-});
-
 app.use(
   cors({
     origin: env.FRONTEND_ORIGIN,
@@ -48,7 +40,7 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 app.use(apiLimiter);
-app.use(csrfProtection);
+app.use(csrfMiddleware);
 
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });

@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 type DriverContract = {
@@ -8,15 +8,16 @@ type DriverContract = {
   monthlyAmount: string;
 };
 
+const ACTIVE_CONTRACT: DriverContract = {
+  id: 'CTR-001',
+  status: 'ACTIVE',
+  monthlyAmount: '350000 FCFA'
+};
+
 export default function App() {
   const [email, setEmail] = useState('driver@autopartage.ga');
   const [password, setPassword] = useState('password123');
   const [loggedIn, setLoggedIn] = useState(false);
-
-  const contract = useMemo<DriverContract>(
-    () => ({ id: 'CTR-001', status: 'ACTIVE', monthlyAmount: '350000 FCFA' }),
-    []
-  );
 
   if (!loggedIn) {
     return (
@@ -46,9 +47,9 @@ export default function App() {
         <Text style={styles.title}>Espace Chauffeur</Text>
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Contrat actif</Text>
-          <Text>Référence: {contract.id}</Text>
-          <Text>Statut: {contract.status}</Text>
-          <Text>Mensualité: {contract.monthlyAmount}</Text>
+          <Text>Référence: {ACTIVE_CONTRACT.id}</Text>
+          <Text>Statut: {ACTIVE_CONTRACT.status}</Text>
+          <Text>Mensualité: {ACTIVE_CONTRACT.monthlyAmount}</Text>
         </View>
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Actions rapides</Text>
