@@ -78,7 +78,11 @@ maintenanceRouter.patch(
         }
       });
 
-      if (payload.status === MaintenanceTaskStatus.OVERDUE && task.escalationLvl >= env.MAINTENANCE_AUTO_IMMOBILIZATION_MIN_ESCALATION) {
+      const shouldAutoImmobilize =
+        payload.status === MaintenanceTaskStatus.OVERDUE &&
+        task.escalationLvl >= env.MAINTENANCE_AUTO_IMMOBILIZATION_MIN_ESCALATION;
+
+      if (shouldAutoImmobilize) {
         await tx.vehicle.update({ where: { id: task.vehicleId }, data: { status: VehicleStatus.IMMOBILIZED } });
       }
 
