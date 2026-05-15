@@ -42,9 +42,9 @@ export type Payment = {
 export type GpsLocation = {
   id: string;
   vehicleId: string;
-  latitude: string;
-  longitude: string;
-  speedKph?: string | null;
+  latitude: number;
+  longitude: number;
+  speedKph?: number | null;
   ignitionOn: boolean;
   trackerOnline: boolean;
   recordedAt: string;

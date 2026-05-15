@@ -2,10 +2,9 @@ import { GpsCommandStatus, GpsCommandType, VehicleStatus } from "@prisma/client"
 import { randomUUID } from "crypto";
 import { Router } from "express";
 import { z } from "zod";
+import { env } from "../../config/env";
 import { prisma } from "../../config/prisma";
 import { HttpError, asyncHandler } from "../../utils/http";
-
-const GPS_COMMAND_TIMEOUT_MS = 2 * 60 * 1000;
 
 const commandSchema = z.object({
   idempotencyKey: z.string().min(8).max(120).optional(),
@@ -28,7 +27,12 @@ gpsRouter.get(
       throw new HttpError(404, "No GPS location found for this vehicle");
     }
 
-    res.json(latest);
+    res.json({
+      ...latest,
+      latitude: Number(latest.latitude),
+      longitude: Number(latest.longitude),
+      speedKph: latest.speedKph !== null ? Number(latest.speedKph) : null
+    });
   })
 );
 
@@ -45,7 +49,7 @@ async function createCommand(
   }
 
   const now = new Date();
-  const timeoutAt = new Date(now.getTime() + GPS_COMMAND_TIMEOUT_MS);
+  const timeoutAt = new Date(now.getTime() + env.GPS_COMMAND_TIMEOUT_MS);
 
   const created = await prisma.$transaction(async (tx) => {
     const commandEntry = await tx.gpsCommand.create({

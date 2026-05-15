@@ -11,7 +11,8 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(1),
   ACCESS_TOKEN_TTL: z.string().default("15m"),
   REFRESH_TOKEN_TTL: z.string().default("7d"),
-  FRONTEND_ORIGIN: z.string().default("http://localhost:3000")
+  FRONTEND_ORIGIN: z.string().default("http://localhost:3000"),
+  GPS_COMMAND_TIMEOUT_MS: z.coerce.number().int().positive().default(120000)
 });
 
 export const env = envSchema.parse(process.env);
