@@ -49,8 +49,8 @@ async function createCommand(
   }
 
   const now = new Date();
-  const timeoutMs = env.GPS_COMMAND_TIMEOUT_MS;
-  const timeoutAt = new Date(now.getTime() + timeoutMs);
+  const commandTimeoutMs = env.GPS_COMMAND_TIMEOUT_MS;
+  const timeoutAt = new Date(now.getTime() + commandTimeoutMs);
 
   const created = await prisma.$transaction(async (tx) => {
     const commandEntry = await tx.gpsCommand.create({

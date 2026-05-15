@@ -12,7 +12,8 @@ const envSchema = z.object({
   ACCESS_TOKEN_TTL: z.string().default("15m"),
   REFRESH_TOKEN_TTL: z.string().default("7d"),
   FRONTEND_ORIGIN: z.string().default("http://localhost:3000"),
-  GPS_COMMAND_TIMEOUT_MS: z.coerce.number().int().positive().default(120000)
+  GPS_COMMAND_TIMEOUT_MS: z.coerce.number().int().positive().default(120000),
+  MAINTENANCE_AUTO_IMMOBILIZATION_MIN_ESCALATION: z.coerce.number().int().min(1).max(3).default(3)
 });
 
 export const env = envSchema.parse(process.env);
