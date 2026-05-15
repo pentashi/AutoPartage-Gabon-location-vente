@@ -19,7 +19,7 @@ export default function NotificationsPage() {
   if (error) return <p>Erreur lors du chargement des notifications.</p>;
 
   return (
-    <DataTable title="Notifications & relances">
+    <DataTable title="Notifications & Relances">
       <table className="w-full text-sm">
         <thead className="bg-slate-100 text-left">
           <tr>

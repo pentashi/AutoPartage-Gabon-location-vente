@@ -5,6 +5,8 @@ import { z } from "zod";
 import { prisma } from "../../config/prisma";
 import { HttpError, asyncHandler } from "../../utils/http";
 
+const GPS_COMMAND_TIMEOUT_MS = 2 * 60 * 1000;
+
 const commandSchema = z.object({
   idempotencyKey: z.string().min(8).max(120).optional(),
   reason: z.string().max(500).optional()
@@ -43,7 +45,7 @@ async function createCommand(
   }
 
   const now = new Date();
-  const timeoutAt = new Date(now.getTime() + 2 * 60 * 1000);
+  const timeoutAt = new Date(now.getTime() + GPS_COMMAND_TIMEOUT_MS);
 
   const created = await prisma.$transaction(async (tx) => {
     const commandEntry = await tx.gpsCommand.create({
