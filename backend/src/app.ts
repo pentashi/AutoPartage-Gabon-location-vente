@@ -3,6 +3,7 @@ import cookieParser from "cookie-parser";
 import express from "express";
 import { Role } from "@prisma/client";
 import rateLimit from "express-rate-limit";
+import session from "express-session";
 import { env } from "./config/env";
 import { authenticate, authorize } from "./middleware/auth";
 import { csrfMiddleware } from "./middleware/csrf";
@@ -39,6 +40,18 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
+app.use(
+  session({
+    secret: env.JWT_REFRESH_SECRET,
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: "lax"
+    }
+  })
+);
 app.use(apiLimiter);
 app.use(csrfMiddleware);
 

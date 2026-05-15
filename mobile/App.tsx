@@ -15,8 +15,8 @@ const ACTIVE_CONTRACT: DriverContract = {
 };
 
 export default function App() {
-  const [email, setEmail] = useState('driver@autopartage.ga');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loggedIn, setLoggedIn] = useState(false);
 
   if (!loggedIn) {

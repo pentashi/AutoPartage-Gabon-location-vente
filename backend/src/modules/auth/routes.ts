@@ -16,13 +16,21 @@ const loginSchema = z.object({
 
 const authRouter = Router();
 
-const toSeconds = (ttl: string) => Math.floor(ms(ttl as StringValue) / 1000);
+const ttlStringToSeconds = (ttl: string) => Math.floor(ms(ttl as StringValue) / 1000);
 
 const signAccessToken = (userId: string, role: Role) =>
-  jwt.sign({ sub: userId, role }, env.JWT_ACCESS_SECRET, { expiresIn: toSeconds(env.ACCESS_TOKEN_TTL) });
+  jwt.sign(
+    { sub: userId, role },
+    env.JWT_ACCESS_SECRET,
+    { expiresIn: ttlStringToSeconds(env.ACCESS_TOKEN_TTL) }
+  );
 
 const signRefreshToken = (userId: string, role: Role) =>
-  jwt.sign({ sub: userId, role }, env.JWT_REFRESH_SECRET, { expiresIn: toSeconds(env.REFRESH_TOKEN_TTL) });
+  jwt.sign(
+    { sub: userId, role },
+    env.JWT_REFRESH_SECRET,
+    { expiresIn: ttlStringToSeconds(env.REFRESH_TOKEN_TTL) }
+  );
 
 const applyAuthCookies = (res: Response, accessToken: string, refreshToken: string) => {
   const isProd = env.NODE_ENV === "production";
