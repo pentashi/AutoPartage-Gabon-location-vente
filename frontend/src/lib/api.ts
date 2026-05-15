@@ -1,4 +1,14 @@
-import { Contract, Driver, Payment, User, Vehicle } from "./types";
+import {
+  Contract,
+  Driver,
+  GpsCommand,
+  GpsLocation,
+  MaintenanceTask,
+  Notification,
+  Payment,
+  User,
+  Vehicle
+} from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 let csrfToken: string | null = null;
@@ -60,5 +70,24 @@ export const api = {
   vehicles: () => request<Vehicle[]>("/vehicles"),
   drivers: () => request<Driver[]>("/drivers"),
   contracts: () => request<Contract[]>("/contracts"),
-  payments: () => request<Payment[]>("/payments")
+  payments: () => request<Payment[]>("/payments"),
+  gpsLatestLocation: (vehicleId: string) => request<GpsLocation>(`/gps/vehicles/${vehicleId}/location/latest`),
+  gpsImmobilize: (vehicleId: string, reason?: string) =>
+    request<GpsCommand>(`/gps/vehicles/${vehicleId}/commands/immobilize`, {
+      method: "POST",
+      body: JSON.stringify({ reason })
+    }),
+  gpsRelease: (vehicleId: string, reason?: string) =>
+    request<GpsCommand>(`/gps/vehicles/${vehicleId}/commands/release`, {
+      method: "POST",
+      body: JSON.stringify({ reason })
+    }),
+  maintenanceTasks: () => request<MaintenanceTask[]>("/maintenance/tasks"),
+  updateMaintenanceStatus: (id: string, status: MaintenanceTask["status"]) =>
+    request<MaintenanceTask>(`/maintenance/tasks/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status })
+    }),
+  notifications: () => request<Notification[]>("/notifications"),
+  markNotificationRead: (id: string) => request<Notification>(`/notifications/${id}/read`, { method: "PATCH" })
 };

@@ -58,6 +58,33 @@ enum NotificationChannel {
   WHATSAPP
 }
 
+enum NotificationPriority {
+  CRITICAL
+  HIGH
+  NORMAL
+}
+
+enum GpsCommandType {
+  IMMOBILIZE
+  RELEASE
+}
+
+enum GpsCommandStatus {
+  PENDING
+  SENT
+  ACKNOWLEDGED
+  FAILED
+  TIMED_OUT
+}
+
+enum MaintenanceTaskStatus {
+  PLANNED
+  IN_PROGRESS
+  OVERDUE
+  COMPLETED
+  CANCELED
+}
+
 model User {
   id           String         @id @default(cuid())
   email        String         @unique
@@ -69,6 +96,9 @@ model User {
   updatedAt    DateTime       @updatedAt
   driver       Driver?
   notifications Notification[]
+  gpsCommands  GpsCommand[]
+  maintenanceTasksCreated MaintenanceTask[] @relation("MaintenanceTaskCreatedBy")
+  maintenanceTasksAssigned MaintenanceTask[] @relation("MaintenanceTaskAssignedTo")
 }
 
 model Driver {
@@ -97,6 +127,9 @@ model Vehicle {
   updatedAt    DateTime      @updatedAt
   contracts    Contract[]
   incidents    Incident[]
+  gpsLocations GpsLocation[]
+  gpsCommands  GpsCommand[]
+  maintenanceTasks MaintenanceTask[]
 }
 
 model Contract {
@@ -156,8 +189,70 @@ model Notification {
   title      String
   message    String
   channel    NotificationChannel @default(IN_APP)
+  priority   NotificationPriority @default(NORMAL)
   isRead     Boolean             @default(false)
+  readAt     DateTime?
   createdAt  DateTime            @default(now())
 
   user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model GpsLocation {
+  id            String   @id @default(cuid())
+  vehicleId     String
+  latitude      Decimal  @db.Decimal(10, 7)
+  longitude     Decimal  @db.Decimal(10, 7)
+  speedKph      Decimal? @db.Decimal(6, 2)
+  ignitionOn    Boolean  @default(false)
+  trackerOnline Boolean  @default(true)
+  recordedAt    DateTime
+  createdAt     DateTime @default(now())
+
+  vehicle       Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId, recordedAt])
+}
+
+model GpsCommand {
+  id             String           @id @default(cuid())
+  vehicleId      String
+  requestedById  String
+  command        GpsCommandType
+  status         GpsCommandStatus @default(PENDING)
+  reason         String?
+  idempotencyKey String           @unique
+  providerRef    String?
+  timeoutAt      DateTime?
+  sentAt         DateTime?
+  acknowledgedAt DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  vehicle        Vehicle          @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  requestedBy    User             @relation(fields: [requestedById], references: [id], onDelete: Restrict)
+
+  @@index([vehicleId, createdAt])
+}
+
+model MaintenanceTask {
+  id            String                @id @default(cuid())
+  vehicleId     String
+  createdById   String
+  assignedToId  String?
+  title         String
+  description   String?
+  dueDate       DateTime?
+  dueMileageKm  Int?
+  escalationLvl Int                   @default(1)
+  status        MaintenanceTaskStatus @default(PLANNED)
+  justification String?
+  completedAt   DateTime?
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  vehicle       Vehicle               @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  createdBy     User                  @relation("MaintenanceTaskCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  assignedTo    User?                 @relation("MaintenanceTaskAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  @@index([vehicleId, status])
 }

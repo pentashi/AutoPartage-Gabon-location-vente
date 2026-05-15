@@ -11,6 +11,9 @@ import { errorMiddleware } from "./middleware/error";
 import { authRouter } from "./modules/auth/routes";
 import { contractsRouter } from "./modules/contracts/routes";
 import { driversRouter } from "./modules/drivers/routes";
+import { gpsRouter } from "./modules/gps/routes";
+import { maintenanceRouter } from "./modules/maintenance/routes";
+import { notificationsRouter } from "./modules/notifications/routes";
 import { paymentsRouter } from "./modules/payments/routes";
 import { usersRouter } from "./modules/users/routes";
 import { vehiclesRouter } from "./modules/vehicles/routes";
@@ -69,6 +72,14 @@ app.use(
   authenticate,
   authorize(Role.SUPER_ADMIN, Role.ADMIN, Role.ACCOUNTANT),
   paymentsRouter
+);
+app.use("/gps", authenticate, authorize(Role.SUPER_ADMIN, Role.ADMIN), gpsRouter);
+app.use("/maintenance", authenticate, authorize(Role.SUPER_ADMIN, Role.ADMIN), maintenanceRouter);
+app.use(
+  "/notifications",
+  authenticate,
+  authorize(Role.SUPER_ADMIN, Role.ADMIN, Role.ACCOUNTANT, Role.DRIVER, Role.GARAGE),
+  notificationsRouter
 );
 
 app.use(errorMiddleware);
