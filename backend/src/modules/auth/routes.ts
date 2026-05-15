@@ -2,6 +2,7 @@ import { Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { Response, Router } from "express";
 import jwt from "jsonwebtoken";
+import ms, { StringValue } from "ms";
 import { z } from "zod";
 import { env } from "../../config/env";
 import { prisma } from "../../config/prisma";
@@ -15,11 +16,13 @@ const loginSchema = z.object({
 
 const authRouter = Router();
 
+const toSeconds = (ttl: string) => Math.floor(ms(ttl as StringValue) / 1000);
+
 const signAccessToken = (userId: string, role: Role) =>
-  jwt.sign({ sub: userId, role }, env.JWT_ACCESS_SECRET, { expiresIn: env.ACCESS_TOKEN_TTL } as any);
+  jwt.sign({ sub: userId, role }, env.JWT_ACCESS_SECRET, { expiresIn: toSeconds(env.ACCESS_TOKEN_TTL) });
 
 const signRefreshToken = (userId: string, role: Role) =>
-  jwt.sign({ sub: userId, role }, env.JWT_REFRESH_SECRET, { expiresIn: env.REFRESH_TOKEN_TTL } as any);
+  jwt.sign({ sub: userId, role }, env.JWT_REFRESH_SECRET, { expiresIn: toSeconds(env.REFRESH_TOKEN_TTL) });
 
 const applyAuthCookies = (res: Response, accessToken: string, refreshToken: string) => {
   const isProd = env.NODE_ENV === "production";
@@ -28,6 +31,13 @@ const applyAuthCookies = (res: Response, accessToken: string, refreshToken: stri
   res.cookie("accessToken", accessToken, { ...base, maxAge: 15 * 60 * 1000 });
   res.cookie("refreshToken", refreshToken, { ...base, maxAge: 7 * 24 * 60 * 60 * 1000 });
 };
+
+authRouter.get(
+  "/csrf-token",
+  asyncHandler(async (req, res) => {
+    res.json({ csrfToken: req.csrfToken() });
+  })
+);
 
 authRouter.post(
   "/login",

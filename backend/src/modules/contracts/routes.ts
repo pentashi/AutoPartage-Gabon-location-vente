@@ -1,4 +1,4 @@
-import { ContractStatus, ContractType, Prisma } from "@prisma/client";
+import { ContractStatus, ContractType, Prisma, VehicleStatus } from "@prisma/client";
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../config/prisma";
@@ -101,7 +101,7 @@ contractsRouter.patch(
     if (status === ContractStatus.SUSPENDED) {
       await prisma.vehicle.update({
         where: { id: updated.vehicleId },
-        data: { status: "IMMOBILIZED" }
+        data: { status: VehicleStatus.IMMOBILIZED }
       });
     }
 

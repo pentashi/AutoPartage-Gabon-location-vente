@@ -1,4 +1,4 @@
-import { PaymentMethod, PaymentStatus, Prisma } from "@prisma/client";
+import { ContractStatus, PaymentMethod, PaymentStatus, Prisma } from "@prisma/client";
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../config/prisma";
@@ -111,7 +111,10 @@ paymentsRouter.patch(
 
     for (const group of overdueContracts) {
       if (group._count._all >= 2) {
-        await prisma.contract.update({ where: { id: group.contractId }, data: { status: "SUSPENDED" } });
+        await prisma.contract.update({
+          where: { id: group.contractId },
+          data: { status: ContractStatus.SUSPENDED }
+        });
       }
     }
 

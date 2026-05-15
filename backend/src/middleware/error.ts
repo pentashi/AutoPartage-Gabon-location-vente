@@ -18,5 +18,13 @@ export const errorMiddleware = (
     return;
   }
 
+  if ((error as { code?: string })?.code === "EBADCSRFTOKEN") {
+    res.status(403).json({ message: "Invalid CSRF token" });
+    return;
+  }
+
+  // eslint-disable-next-line no-console
+  console.error("Unhandled error", error);
+
   res.status(500).json({ message: "Internal server error" });
 };
