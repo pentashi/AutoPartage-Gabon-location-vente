@@ -4,7 +4,7 @@ import { z } from "zod";
 import { prisma } from "../../config/prisma";
 import { asyncHandler } from "../../utils/http";
 
-const ESCALATION_LEVEL_CRITICAL_SECURITY = 3;
+const MIN_ESCALATION_LEVEL_FOR_AUTO_IMMOBILIZATION = 3;
 
 const createTaskSchema = z.object({
   vehicleId: z.string(),
@@ -79,7 +79,7 @@ maintenanceRouter.patch(
         }
       });
 
-      if (payload.status === MaintenanceTaskStatus.OVERDUE && task.escalationLvl >= ESCALATION_LEVEL_CRITICAL_SECURITY) {
+      if (payload.status === MaintenanceTaskStatus.OVERDUE && task.escalationLvl >= MIN_ESCALATION_LEVEL_FOR_AUTO_IMMOBILIZATION) {
         await tx.vehicle.update({ where: { id: task.vehicleId }, data: { status: VehicleStatus.IMMOBILIZED } });
       }
 
