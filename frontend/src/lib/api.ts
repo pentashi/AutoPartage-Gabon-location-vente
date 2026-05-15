@@ -18,17 +18,24 @@ async function getCsrfToken() {
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const method = (init?.method ?? "GET").toUpperCase();
   const needsCsrf = !["GET", "HEAD", "OPTIONS"].includes(method);
-  const token = needsCsrf ? await getCsrfToken() : null;
+  const doFetch = async () => {
+    const token = needsCsrf ? await getCsrfToken() : null;
+    return fetch(`${API_URL}${path}`, {
+      ...init,
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { "x-csrf-token": token } : {}),
+        ...(init?.headers ?? {})
+      }
+    });
+  };
 
-  const res = await fetch(`${API_URL}${path}`, {
-    ...init,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { "x-csrf-token": token } : {}),
-      ...(init?.headers ?? {})
-    }
-  });
+  let res = await doFetch();
+  if (needsCsrf && res.status === 403) {
+    csrfToken = null;
+    res = await doFetch();
+  }
 
   if (!res.ok) {
     const errorBody = await res.text();

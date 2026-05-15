@@ -15,7 +15,7 @@ const createSchema = z.object({
 });
 
 const updateSchema = createSchema.partial();
-const SUSPEND_CONTRACT_OVERDUE_THRESHOLD = 2;
+const OVERDUE_PAYMENTS_BEFORE_SUSPENSION = 2;
 
 const paymentsRouter = Router();
 
@@ -110,16 +110,18 @@ paymentsRouter.patch(
       _count: { _all: true }
     });
 
+    let suspendedContracts = 0;
     for (const group of overdueContracts) {
-      if (group._count._all >= SUSPEND_CONTRACT_OVERDUE_THRESHOLD) {
-        await prisma.contract.update({
-          where: { id: group.contractId },
+      if (group._count._all >= OVERDUE_PAYMENTS_BEFORE_SUSPENSION) {
+        const updateResult = await prisma.contract.updateMany({
+          where: { id: group.contractId, status: { not: ContractStatus.SUSPENDED } },
           data: { status: ContractStatus.SUSPENDED }
         });
+        suspendedContracts += updateResult.count;
       }
     }
 
-    res.json({ updatedPayments: result.count, suspendedContracts: overdueContracts.length });
+    res.json({ updatedPayments: result.count, suspendedContracts });
   })
 );
 

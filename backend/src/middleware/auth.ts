@@ -24,8 +24,13 @@ export const authenticate = (req: Request, _res: Response, next: NextFunction) =
     throw new HttpError(401, "Unauthorized");
   }
 
-  const payload = jwt.verify(token, env.JWT_ACCESS_SECRET) as AccessPayload;
-  req.auth = payload;
+  try {
+    const payload = jwt.verify(token, env.JWT_ACCESS_SECRET) as AccessPayload;
+    req.auth = payload;
+  } catch {
+    throw new HttpError(401, "Invalid or expired token");
+  }
+
   next();
 };
 

@@ -17,6 +17,7 @@ const loginSchema = z.object({
 const authRouter = Router();
 
 const ttlStringToSeconds = (ttl: string) => Math.floor(ms(ttl as StringValue) / 1000);
+const ttlStringToMilliseconds = (ttl: string) => ms(ttl as StringValue);
 
 const signAccessToken = (userId: string, role: Role) =>
   jwt.sign(
@@ -36,8 +37,11 @@ const applyAuthCookies = (res: Response, accessToken: string, refreshToken: stri
   const isProd = env.NODE_ENV === "production";
   const base = { httpOnly: true, secure: isProd, sameSite: "lax" as const };
 
-  res.cookie("accessToken", accessToken, { ...base, maxAge: 15 * 60 * 1000 });
-  res.cookie("refreshToken", refreshToken, { ...base, maxAge: 7 * 24 * 60 * 60 * 1000 });
+  res.cookie("accessToken", accessToken, { ...base, maxAge: ttlStringToMilliseconds(env.ACCESS_TOKEN_TTL) });
+  res.cookie("refreshToken", refreshToken, {
+    ...base,
+    maxAge: ttlStringToMilliseconds(env.REFRESH_TOKEN_TTL)
+  });
 };
 
 authRouter.get(
