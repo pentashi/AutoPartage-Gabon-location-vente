@@ -57,9 +57,20 @@ Cas clés déjà décrits :
 ## Roadmap
 
 - **Phase 1 — Terminée** : Auth, Chauffeurs, Véhicules, Contrats, Paiements
-- **Phase 2 — En cours** : GPS, Maintenance, Notifications
+- **Phase 2 — MVP figé** : GPS, Maintenance, Notifications (spécifications prêtes)
 - **Phase 3 — Planifiée** : Boutique, Garages, Protection sociale
 - **Phase 4 — IA** : Score risque, Analytics avancé, IA prédictive
+
+## Documentation MVP Phase 2
+
+- Dossier de finalisation: [`docs/mvp/README.md`](./docs/mvp/README.md)
+- Périmètre figé: [`docs/mvp/01-mvp-scope.md`](./docs/mvp/01-mvp-scope.md)
+- Règles métier: [`docs/mvp/02-business-rules.md`](./docs/mvp/02-business-rules.md)
+- Intégrations: [`docs/mvp/03-integrations.md`](./docs/mvp/03-integrations.md)
+- Données/API: [`docs/mvp/04-data-api.md`](./docs/mvp/04-data-api.md)
+- UX opérationnelle: [`docs/mvp/05-ux-operations.md`](./docs/mvp/05-ux-operations.md)
+- Go-live GCP: [`docs/mvp/06-gcp-go-live.md`](./docs/mvp/06-gcp-go-live.md)
+- Recette finale: [`docs/mvp/07-final-recipe.md`](./docs/mvp/07-final-recipe.md)
 
 ## Informations à compléter (sections manquantes à partager)
 
