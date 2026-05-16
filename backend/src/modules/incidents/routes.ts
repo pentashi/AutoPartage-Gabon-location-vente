@@ -19,6 +19,12 @@ const updateIncidentStatusSchema = z.object({
 
 const incidentsRouter = Router();
 
+function buildIncidentStatusTraceMessage(incidentId: string, status: IncidentStatus, actorId: string, note?: string) {
+  return note
+    ? `Incident ${incidentId} -> ${status} par ${actorId} (${note})`
+    : `Incident ${incidentId} -> ${status} par ${actorId}`;
+}
+
 incidentsRouter.get(
   "/",
   asyncHandler(async (req, res) => {
@@ -116,7 +122,7 @@ incidentsRouter.patch(
           data: adminUsers.map((user) => ({
             userId: user.id,
             title: "Traçabilité incident admin",
-            message: `Incident ${incident.id} -> ${payload.status} par ${req.auth!.sub}${payload.note ? ` (${payload.note})` : ""}`,
+            message: buildIncidentStatusTraceMessage(incident.id, payload.status, req.auth!.sub, payload.note),
             priority: payload.status === IncidentStatus.RESOLVED ? NotificationPriority.HIGH : NotificationPriority.NORMAL
           }))
         });
