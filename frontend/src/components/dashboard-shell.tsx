@@ -29,6 +29,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             <Link href="/dashboard/payments">Paiements</Link>
             <Link href="/dashboard/gps">GPS</Link>
             <Link href="/dashboard/maintenance">Maintenance</Link>
+            <Link href="/dashboard/incidents">Incidents</Link>
             <Link href="/dashboard/notifications">Notifications</Link>
             <span className="rounded bg-slate-100 px-2 py-1">{role ?? "No role"}</span>
             <button className="rounded bg-slate-900 px-3 py-1 text-white" onClick={logout}>

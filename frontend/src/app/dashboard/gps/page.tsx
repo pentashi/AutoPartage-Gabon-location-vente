@@ -63,14 +63,26 @@ export default function GpsPage() {
                     <button
                       className="rounded bg-red-600 px-2 py-1 text-white disabled:bg-red-300"
                       disabled={immobilizeMutation.isPending}
-                      onClick={() => immobilizeMutation.mutate(vehicle.id)}
+                      onClick={() => {
+                        const confirmed = window.confirm(
+                          `Confirmer l'immobilisation du véhicule ${vehicle.plateNumber} ?`
+                        );
+                        if (!confirmed) return;
+                        immobilizeMutation.mutate(vehicle.id);
+                      }}
                     >
                       Immobiliser
                     </button>
                     <button
                       className="rounded bg-emerald-600 px-2 py-1 text-white disabled:bg-emerald-300"
                       disabled={releaseMutation.isPending}
-                      onClick={() => releaseMutation.mutate(vehicle.id)}
+                      onClick={() => {
+                        const confirmed = window.confirm(
+                          `Confirmer le déblocage du véhicule ${vehicle.plateNumber} ?`
+                        );
+                        if (!confirmed) return;
+                        releaseMutation.mutate(vehicle.id);
+                      }}
                     >
                       Débloquer
                     </button>

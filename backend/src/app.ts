@@ -12,6 +12,7 @@ import { authRouter } from "./modules/auth/routes";
 import { contractsRouter } from "./modules/contracts/routes";
 import { driversRouter } from "./modules/drivers/routes";
 import { gpsRouter } from "./modules/gps/routes";
+import { incidentsRouter } from "./modules/incidents/routes";
 import { maintenanceRouter } from "./modules/maintenance/routes";
 import { notificationsRouter } from "./modules/notifications/routes";
 import { paymentsRouter } from "./modules/payments/routes";
@@ -74,6 +75,7 @@ app.use(
   paymentsRouter
 );
 app.use("/gps", authenticate, authorize(Role.SUPER_ADMIN, Role.ADMIN), gpsRouter);
+app.use("/incidents", authenticate, authorize(Role.SUPER_ADMIN, Role.ADMIN), incidentsRouter);
 app.use("/maintenance", authenticate, authorize(Role.SUPER_ADMIN, Role.ADMIN), maintenanceRouter);
 app.use(
   "/notifications",
