@@ -38,3 +38,46 @@ export type Payment = {
   status: "PENDING" | "PAID" | "OVERDUE";
   dueDate: string;
 };
+
+export type GpsLocation = {
+  id: string;
+  vehicleId: string;
+  latitude: number;
+  longitude: number;
+  speedKph?: number | null;
+  ignitionOn: boolean;
+  trackerOnline: boolean;
+  recordedAt: string;
+};
+
+export type GpsCommand = {
+  id: string;
+  vehicleId: string;
+  command: "IMMOBILIZE" | "RELEASE";
+  status: "PENDING" | "SENT" | "ACKNOWLEDGED" | "FAILED" | "TIMED_OUT";
+  reason?: string | null;
+  createdAt: string;
+};
+
+export type MaintenanceTask = {
+  id: string;
+  vehicleId: string;
+  title: string;
+  description?: string | null;
+  status: "PLANNED" | "IN_PROGRESS" | "OVERDUE" | "COMPLETED" | "CANCELED";
+  escalationLvl: number;
+  dueDate?: string | null;
+  dueMileageKm?: number | null;
+  createdAt: string;
+};
+
+export type Notification = {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  channel: "IN_APP" | "EMAIL" | "SMS" | "WHATSAPP";
+  priority: "CRITICAL" | "HIGH" | "NORMAL";
+  isRead: boolean;
+  createdAt: string;
+};
