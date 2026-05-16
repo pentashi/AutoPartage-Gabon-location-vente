@@ -12,9 +12,11 @@ RUN npm run prisma:generate && npm run build
 FROM node:20-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
-COPY package*.json ./
-RUN npm ci --omit=dev
+# Copy all node_modules from build (includes Prisma CLI needed for migrate deploy)
+COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
 EXPOSE 4000
-CMD ["node", "dist/index.js"]
+ENTRYPOINT ["./entrypoint.sh"]

@@ -2,15 +2,29 @@ apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
   name: autopartage-frontend
+  annotations:
+    run.googleapis.com/ingress: all
 spec:
   template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: "0"
+        autoscaling.knative.dev/maxScale: "10"
     spec:
+      serviceAccountName: autopartage-frontend@PROJECT_ID.iam.gserviceaccount.com
+      containerConcurrency: 50
       containers:
         - image: REGION-docker.pkg.dev/PROJECT_ID/autopartage/frontend:latest
           ports:
             - containerPort: 3000
+          resources:
+            limits:
+              cpu: "1"
+              memory: 512Mi
           env:
             - name: NODE_ENV
               value: production
             - name: NEXT_PUBLIC_API_URL
-              value: https://autopartage-backend-xxxx.run.app
+              # Replace with actual backend Cloud Run URL after first deployment
+              value: https://autopartage-backend-CHANGE_ME.a.run.app
+
