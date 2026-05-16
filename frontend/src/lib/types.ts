@@ -81,3 +81,15 @@ export type Notification = {
   isRead: boolean;
   createdAt: string;
 };
+
+export type Incident = {
+  id: string;
+  driverId?: string | null;
+  vehicleId?: string | null;
+  title: string;
+  description: string;
+  status: "OPEN" | "INVESTIGATING" | "RESOLVED";
+  occurredAt: string;
+  resolvedAt?: string | null;
+  createdAt: string;
+};

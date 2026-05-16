@@ -1,6 +1,7 @@
 import {
   Contract,
   Driver,
+  Incident,
   GpsCommand,
   GpsLocation,
   MaintenanceTask,
@@ -89,5 +90,21 @@ export const api = {
       body: JSON.stringify({ status })
     }),
   notifications: () => request<Notification[]>("/notifications"),
-  markNotificationRead: (id: string) => request<Notification>(`/notifications/${id}/read`, { method: "PATCH" })
+  markNotificationRead: (id: string) => request<Notification>(`/notifications/${id}/read`, { method: "PATCH" }),
+  incidents: () => request<Incident[]>("/incidents"),
+  createIncident: (payload: {
+    title: string;
+    description: string;
+    vehicleId?: string;
+    driverId?: string;
+  }) =>
+    request<Incident>("/incidents", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+  updateIncidentStatus: (id: string, status: Incident["status"], note?: string) =>
+    request<Incident>(`/incidents/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status, note })
+    })
 };
