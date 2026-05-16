@@ -36,3 +36,8 @@ Conditions de signature:
 Après signature:
 - toute nouvelle demande passe en backlog post-MVP
 - aucune extension de scope sans arbitrage formel
+
+## Exécution opérationnelle
+
+La checklist d’exécution MVP 100% (jour par jour) est disponible dans:
+- `docs/mvp/08-mvp-100-checklist.md`

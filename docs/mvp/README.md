@@ -11,6 +11,7 @@ Ce dossier fige le périmètre et les règles de livraison du MVP AutoPartage Ga
 5. `05-ux-operations.md` — parcours UX opérationnel quotidien.
 6. `06-gcp-go-live.md` — préparation GCP, déploiement, rollback, runbook.
 7. `07-final-recipe.md` — recette finale MVP, critères de sortie et gel.
+8. `08-mvp-100-checklist.md` — checklist exécutable jour par jour pour atteindre 100% MVP web.
 
 ## Statut
 
