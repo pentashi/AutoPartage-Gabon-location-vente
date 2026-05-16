@@ -57,6 +57,7 @@ export default function GpsPage() {
           <thead className="bg-slate-100 text-left">
             <tr>
               <th className="px-4 py-2">Véhicule</th>
+              <th className="px-4 py-2">Plaque</th>
               <th className="px-4 py-2">Statut</th>
               <th className="px-4 py-2">Dernière position</th>
               <th className="px-4 py-2">Actions</th>
@@ -70,6 +71,7 @@ export default function GpsPage() {
               return (
                 <tr key={vehicle.id} className="border-t">
                   <td className="px-4 py-2">{vehicle.brand} {vehicle.model}</td>
+                  <td className="px-4 py-2">{vehicle.plateNumber}</td>
                   <td className="px-4 py-2">{vehicle.status}</td>
                   <td className="px-4 py-2">
                     {location
@@ -120,7 +122,9 @@ export default function GpsPage() {
         }
         description={
           pendingAction
-            ? `Véhicule ${pendingAction.plateNumber} — cette action est sensible.`
+            ? pendingAction.type === "IMMOBILIZE"
+              ? `Véhicule ${pendingAction.plateNumber} — cette action immobilisera le véhicule et sera tracée.`
+              : `Véhicule ${pendingAction.plateNumber} — cette action débloquera le véhicule et sera tracée.`
             : ""
         }
         confirmLabel="Valider"

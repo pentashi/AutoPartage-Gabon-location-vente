@@ -125,7 +125,7 @@ incidentsRouter.patch(
         await tx.notification.createMany({
           data: adminUsers.map((user) => ({
             userId: user.id,
-            title: "Traçabilité incident admin",
+            title: "Traçabilité d'incident admin",
             message: buildIncidentStatusTraceMessage(incident.id, payload.status, actorId, payload.note),
             priority: payload.status === IncidentStatus.RESOLVED ? NotificationPriority.HIGH : NotificationPriority.NORMAL
           }))
