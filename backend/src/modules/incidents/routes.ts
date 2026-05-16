@@ -92,6 +92,10 @@ incidentsRouter.patch(
   asyncHandler(async (req, res) => {
     const id = String(req.params.id);
     const payload = updateIncidentStatusSchema.parse(req.body);
+    const actorId = req.auth?.sub;
+    if (!actorId) {
+      throw new HttpError(401, "Unauthorized");
+    }
 
     const existing = await prisma.incident.findUnique({ where: { id } });
     if (!existing) {
@@ -122,7 +126,7 @@ incidentsRouter.patch(
           data: adminUsers.map((user) => ({
             userId: user.id,
             title: "Traçabilité incident admin",
-            message: buildIncidentStatusTraceMessage(incident.id, payload.status, req.auth!.sub, payload.note),
+            message: buildIncidentStatusTraceMessage(incident.id, payload.status, actorId, payload.note),
             priority: payload.status === IncidentStatus.RESOLVED ? NotificationPriority.HIGH : NotificationPriority.NORMAL
           }))
         });

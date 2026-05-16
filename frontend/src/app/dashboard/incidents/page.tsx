@@ -13,7 +13,7 @@ export default function IncidentsPage() {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [pendingResolve, setPendingResolve] = useState<{ id: string } | null>(null);
+  const [pendingResolve, setPendingResolve] = useState<{ id: string; title: string } | null>(null);
 
   const createMutation = useMutation({
     mutationFn: api.createIncident,
@@ -111,7 +111,7 @@ export default function IncidentsPage() {
                       <button
                         className="rounded bg-emerald-600 px-2 py-1 text-white disabled:bg-emerald-300"
                         disabled={statusMutation.isPending || incident.status === "RESOLVED"}
-                        onClick={() => setPendingResolve({ id: incident.id })}
+                        onClick={() => setPendingResolve({ id: incident.id, title: incident.title })}
                       >
                         Clôturer
                       </button>
@@ -127,7 +127,7 @@ export default function IncidentsPage() {
       <ConfirmDialog
         open={Boolean(pendingResolve)}
         title="Confirmer la clôture incident"
-        description={pendingResolve ? `Incident ${pendingResolve.id} — cette action sera tracée.` : ""}
+        description={pendingResolve ? `${pendingResolve.title} — cette action sera tracée.` : ""}
         confirmLabel="Clôturer"
         onCancel={() => setPendingResolve(null)}
         onConfirm={confirmResolve}
