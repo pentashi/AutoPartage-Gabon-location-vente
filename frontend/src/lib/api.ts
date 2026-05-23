@@ -1,5 +1,7 @@
 import {
   Contract,
+  DashboardStats,
+  AuditLog,
   Driver,
   Incident,
   GpsCommand,
@@ -49,8 +51,24 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   if (!res.ok) {
-    const errorBody = await res.text();
-    throw new Error(errorBody || `Request failed: ${res.status}`);
+    let errorMessage = `Request failed: ${res.status}`;
+    try {
+      const errorData = await res.json();
+      if (errorData.message === "Validation failed" && errorData.issues) {
+        // Handle Zod validation errors
+        const fieldErrors = errorData.issues.fieldErrors;
+        const messages = Object.entries(fieldErrors)
+          .map(([field, errors]) => `${field}: ${(errors as string[]).join(", ")}`)
+          .join(" | ");
+        errorMessage = `Validation échouée: ${messages}`;
+      } else if (errorData.message) {
+        errorMessage = errorData.message;
+      }
+    } catch {
+      const text = await res.text();
+      if (text) errorMessage = text;
+    }
+    throw new Error(errorMessage);
   }
 
   if (res.status === 204) {
@@ -66,8 +84,25 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ email, password })
     }),
+  signup: (fullName: string, email: string, password: string) =>
+    request<User>("/auth/signup", {
+      method: "POST",
+      body: JSON.stringify({ fullName, email, password })
+    }),
   logout: () => request<void>("/auth/logout", { method: "POST" }),
+  dashboardStats: () => request<DashboardStats>("/dashboard/stats"),
+  dashboardAuditLogs: () => request<AuditLog[]>("/dashboard/audit-logs"),
   users: () => request<User[]>("/users"),
+  createUser: (payload: any) =>
+    request<User>("/users", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+  updateUser: (id: string, payload: any) =>
+    request<User>(`/users/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload)
+    }),
   vehicles: () => request<Vehicle[]>("/vehicles"),
   drivers: () => request<Driver[]>("/drivers"),
   contracts: () => request<Contract[]>("/contracts"),

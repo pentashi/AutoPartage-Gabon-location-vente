@@ -14,7 +14,7 @@ export default function DashboardPage() {
     }
 
     if (role === "SUPER_ADMIN") {
-      router.replace("/dashboard/users");
+      router.replace("/dashboard/overview");
       return;
     }
 

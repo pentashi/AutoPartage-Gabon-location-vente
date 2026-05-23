@@ -11,16 +11,30 @@ steps:
       - ./backend
     waitFor: ['-']
 
+  - id: get-backend-url
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        gcloud run services describe autopartage-backend \
+          --region=${_REGION} --format='value(status.url)' > backend_url.txt || echo "https://autopartage-backend-CHANGE_ME.a.run.app" > backend_url.txt
+    waitFor: ['-']
+
   - id: build-frontend
     name: gcr.io/cloud-builders/docker
+    entrypoint: bash
     args:
-      - build
-      - -t
-      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/autopartage/frontend:$COMMIT_SHA
-      - -t
-      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/autopartage/frontend:latest
-      - ./frontend
-    waitFor: ['-']
+      - -c
+      - |
+        BACKEND_URL=$(cat backend_url.txt)
+        echo "Building frontend with NEXT_PUBLIC_API_URL=$$BACKEND_URL"
+        docker build \
+          --build-arg NEXT_PUBLIC_API_URL=$$BACKEND_URL \
+          -t ${_REGION}-docker.pkg.dev/$PROJECT_ID/autopartage/frontend:$COMMIT_SHA \
+          -t ${_REGION}-docker.pkg.dev/$PROJECT_ID/autopartage/frontend:latest \
+          ./frontend
+    waitFor: [get-backend-url]
 
   # ── 2. Push images ────────────────────────────────────────────────────────────
   - id: push-backend
@@ -53,7 +67,7 @@ steps:
       - --add-cloudsql-instances=$PROJECT_ID:${_REGION}:autopartage-db
       - --service-account=autopartage-backend@$PROJECT_ID.iam.gserviceaccount.com
       - --set-secrets=DATABASE_URL=DATABASE_URL:latest,JWT_ACCESS_SECRET=JWT_ACCESS_SECRET:latest,JWT_REFRESH_SECRET=JWT_REFRESH_SECRET:latest
-      - --set-env-vars=NODE_ENV=production,PORT=4000,FRONTEND_ORIGIN=${_FRONTEND_ORIGIN}
+      - --set-env-vars=NODE_ENV=production,FRONTEND_ORIGIN=${_FRONTEND_ORIGIN}
       - --memory=512Mi
       - --cpu=1
       - --min-instances=0
@@ -103,18 +117,18 @@ steps:
           --region=${_REGION} --format='value(status.url)')
 
         _wait_for_200() {
-          local URL="$1"
-          local NAME="$2"
+          local URL="$$1"
+          local NAME="$$2"
           local MAX_RETRIES=10
           local RETRY_INTERVAL=10
-          for i in $(seq 1 $MAX_RETRIES); do
-            HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 15 "$$URL" 2>/dev/null || echo "000")
+          for i in $$(seq 1 $$MAX_RETRIES); do
+            HTTP_CODE=$$(curl -sf -o /dev/null -w "%{http_code}" --max-time 15 "$$URL" 2>/dev/null || echo "000")
             if [ "$$HTTP_CODE" = "200" ]; then
               echo "  $$NAME OK (attempt $$i)"
               return 0
             fi
-            echo "  $$NAME not ready yet ($$HTTP_CODE) — retrying in $${RETRY_INTERVAL}s ($$i/$MAX_RETRIES)..."
-            sleep $RETRY_INTERVAL
+            echo "  $$NAME not ready yet ($$HTTP_CODE) — retrying in $$RETRY_INTERVAL s ($$i/$$MAX_RETRIES)..."
+            sleep $$RETRY_INTERVAL
           done
           echo "ERROR: $$NAME did not become healthy after $$(( MAX_RETRIES * RETRY_INTERVAL ))s"
           return 1

@@ -1,4 +1,4 @@
-import { GpsCommandStatus, GpsCommandType, VehicleStatus } from "@prisma/client";
+import { GpsCommandStatus, GpsCommandType, Prisma, VehicleStatus } from "@prisma/client";
 import { randomUUID } from "crypto";
 import { Router } from "express";
 import { z } from "zod";
@@ -11,7 +11,54 @@ const commandSchema = z.object({
   reason: z.string().max(500).optional()
 });
 
+const ingestSchema = z.object({
+  vehicleId: z.string(),
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+  speedKph: z.number().nonnegative().optional(),
+  ignitionOn: z.boolean().optional(),
+  trackerOnline: z.boolean().optional(),
+  recordedAt: z.coerce.date().optional()
+});
+
 const gpsRouter = Router();
+
+gpsRouter.post(
+  "/locations/ingest",
+  asyncHandler(async (req, res) => {
+    const payload = ingestSchema.parse(req.body);
+
+    const location = await prisma.gpsLocation.create({
+      data: {
+        ...payload,
+        latitude: new Prisma.Decimal(payload.latitude),
+        longitude: new Prisma.Decimal(payload.longitude),
+        speedKph: payload.speedKph !== undefined ? new Prisma.Decimal(payload.speedKph) : undefined,
+        recordedAt: payload.recordedAt ?? new Date()
+      }
+    });
+
+    res.status(201).json(location);
+  })
+);
+
+gpsRouter.get(
+  "/commands/history",
+  asyncHandler(async (req, res) => {
+    const vehicleId = req.query.vehicleId as string | undefined;
+
+    const history = await prisma.gpsCommand.findMany({
+      where: vehicleId ? { vehicleId } : undefined,
+      include: {
+        requestedBy: { select: { id: true, fullName: true, role: true } },
+        vehicle: { select: { id: true, plateNumber: true } }
+      },
+      orderBy: { createdAt: "desc" }
+    });
+
+    res.json(history);
+  })
+);
 
 gpsRouter.get(
   "/vehicles/:vehicleId/location/latest",

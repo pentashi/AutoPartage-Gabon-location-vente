@@ -10,6 +10,7 @@ import { csrfMiddleware } from "./middleware/csrf";
 import { errorMiddleware } from "./middleware/error";
 import { authRouter } from "./modules/auth/routes";
 import { contractsRouter } from "./modules/contracts/routes";
+import { dashboardRouter } from "./modules/dashboard/routes";
 import { driversRouter } from "./modules/drivers/routes";
 import { gpsRouter } from "./modules/gps/routes";
 import { incidentsRouter } from "./modules/incidents/routes";
@@ -21,6 +22,17 @@ import { vehiclesRouter } from "./modules/vehicles/routes";
 
 export const app = express();
 const isProd = env.NODE_ENV === "production";
+
+if (isProd) {
+  app.set("trust proxy", 1);
+}
+
+app.use(
+  cors({
+    origin: env.FRONTEND_ORIGIN,
+    credentials: true,
+  })
+);
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -52,7 +64,7 @@ app.use(
     cookie: {
       httpOnly: true,
       secure: isProd,
-      sameSite: "lax"
+      sameSite: isProd ? "none" : "lax"
     }
   })
 );
@@ -64,19 +76,40 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/auth", authLimiter, authRouter);
+app.use("/dashboard", authenticate, dashboardRouter);
 app.use("/users", authenticate, authorize(Role.SUPER_ADMIN, Role.ADMIN), usersRouter);
-app.use("/vehicles", authenticate, authorize(Role.SUPER_ADMIN, Role.ADMIN), vehiclesRouter);
-app.use("/drivers", authenticate, authorize(Role.SUPER_ADMIN, Role.ADMIN), driversRouter);
-app.use("/contracts", authenticate, authorize(Role.SUPER_ADMIN, Role.ADMIN), contractsRouter);
+app.use(
+  "/vehicles",
+  authenticate,
+  authorize(Role.SUPER_ADMIN, Role.ADMIN, Role.FLEET),
+  vehiclesRouter
+);
+app.use("/drivers", authenticate, authorize(Role.SUPER_ADMIN, Role.ADMIN, Role.FLEET), driversRouter);
+app.use(
+  "/contracts",
+  authenticate,
+  authorize(Role.SUPER_ADMIN, Role.ADMIN, Role.FLEET, Role.ACCOUNTANT),
+  contractsRouter
+);
 app.use(
   "/payments",
   authenticate,
   authorize(Role.SUPER_ADMIN, Role.ADMIN, Role.ACCOUNTANT),
   paymentsRouter
 );
-app.use("/gps", authenticate, authorize(Role.SUPER_ADMIN, Role.ADMIN), gpsRouter);
-app.use("/incidents", authenticate, authorize(Role.SUPER_ADMIN, Role.ADMIN), incidentsRouter);
-app.use("/maintenance", authenticate, authorize(Role.SUPER_ADMIN, Role.ADMIN), maintenanceRouter);
+app.use("/gps", authenticate, authorize(Role.SUPER_ADMIN, Role.ADMIN, Role.FLEET), gpsRouter);
+app.use(
+  "/incidents",
+  authenticate,
+  authorize(Role.SUPER_ADMIN, Role.ADMIN, Role.FLEET, Role.DRIVER),
+  incidentsRouter
+);
+app.use(
+  "/maintenance",
+  authenticate,
+  authorize(Role.SUPER_ADMIN, Role.ADMIN, Role.FLEET, Role.GARAGE),
+  maintenanceRouter
+);
 app.use(
   "/notifications",
   authenticate,

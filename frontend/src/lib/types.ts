@@ -1,4 +1,11 @@
-export type Role = "SUPER_ADMIN" | "ADMIN" | "ACCOUNTANT" | "DRIVER" | "GARAGE";
+export enum Role {
+  SUPER_ADMIN = "SUPER_ADMIN",
+  ADMIN = "ADMIN",
+  ACCOUNTANT = "ACCOUNTANT",
+  DRIVER = "DRIVER",
+  GARAGE = "GARAGE",
+  FLEET_MANAGER = "FLEET_MANAGER",
+}
 
 export type User = {
   id: string;
@@ -92,4 +99,31 @@ export type Incident = {
   occurredAt: string;
   resolvedAt?: string | null;
   createdAt: string;
+};
+
+export type DashboardStats = {
+  vehicles: {
+    total: number;
+    ACTIVE?: number;
+    IMMOBILIZED?: number;
+    MAINTENANCE?: number;
+  };
+  drivers: number;
+  finance: {
+    paidAmount: number;
+    dueAmount: number;
+    recoveryRate: number;
+  };
+  alerts: {
+    criticalNotifications: number;
+    activeIncidents: number;
+  };
+};
+
+export type AuditLog = {
+  id: string;
+  timestamp: string;
+  type: "GPS_COMMAND" | "INCIDENT_UPDATE" | "CRITICAL_ALERT";
+  message: string;
+  status: string;
 };

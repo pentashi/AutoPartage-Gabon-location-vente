@@ -1,4 +1,4 @@
-import { ContractStatus, PaymentMethod, PaymentStatus, Prisma } from "@prisma/client";
+import { ContractStatus, PaymentMethod, PaymentStatus, Prisma, VehicleStatus } from "@prisma/client";
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../config/prisma";
@@ -110,18 +110,30 @@ paymentsRouter.patch(
       _count: { _all: true }
     });
 
-    let suspendedContracts = 0;
+    let suspendedContractsCount = 0;
     for (const group of overdueContracts) {
       if (group._count._all >= OVERDUE_PAYMENTS_BEFORE_SUSPENSION) {
-        const updateResult = await prisma.contract.updateMany({
-          where: { id: group.contractId, status: { not: ContractStatus.SUSPENDED } },
-          data: { status: ContractStatus.SUSPENDED }
+        const contract = await prisma.contract.findUnique({
+          where: { id: group.contractId, status: { not: ContractStatus.SUSPENDED } }
         });
-        suspendedContracts += updateResult.count;
+
+        if (contract) {
+          await prisma.$transaction([
+            prisma.contract.update({
+              where: { id: contract.id },
+              data: { status: ContractStatus.SUSPENDED }
+            }),
+            prisma.vehicle.update({
+              where: { id: contract.vehicleId },
+              data: { status: VehicleStatus.IMMOBILIZED }
+            })
+          ]);
+          suspendedContractsCount++;
+        }
       }
     }
 
-    res.json({ updatedPayments: result.count, suspendedContracts });
+    res.json({ updatedPayments: result.count, suspendedContracts: suspendedContractsCount });
   })
 );
 

@@ -3,12 +3,24 @@
 import { useQuery } from "@tanstack/react-query";
 import { DataTable } from "@/components/data-table";
 import { api } from "@/lib/api";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function VehiclesPage() {
+  const router = useRouter();
   const { data = [], isLoading, error } = useQuery({ queryKey: ["vehicles"], queryFn: api.vehicles });
 
+  useEffect(() => {
+    if (error && error.message === "Unauthorized") {
+      router.push("/login");
+    }
+  }, [error, router]);
+
   if (isLoading) return <p>Chargement...</p>;
-  if (error) return <p>Erreur lors du chargement des véhicules.</p>;
+  if (error) {
+    if (error.message === "Unauthorized") return null;
+    return <p>Erreur lors du chargement des véhicules.</p>;
+  }
 
   return (
     <DataTable title="Flotte véhicules">

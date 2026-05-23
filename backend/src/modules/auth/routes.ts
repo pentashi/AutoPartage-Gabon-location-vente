@@ -14,6 +14,12 @@ const loginSchema = z.object({
   password: z.string().min(8)
 });
 
+const signupSchema = z.object({
+  email: z.string().email(),
+  fullName: z.string().min(2),
+  password: z.string().min(8)
+});
+
 const authRouter = Router();
 
 const ttlStringToSeconds = (ttl: string) => Math.floor(ms(ttl as StringValue) / 1000);
@@ -35,7 +41,11 @@ const signRefreshToken = (userId: string, role: Role) =>
 
 const applyAuthCookies = (res: Response, accessToken: string, refreshToken: string) => {
   const isProd = env.NODE_ENV === "production";
-  const base = { httpOnly: true, secure: isProd, sameSite: "lax" as const };
+  const base = {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? ("none" as const) : ("lax" as const)
+  };
 
   res.cookie("accessToken", accessToken, { ...base, maxAge: ttlStringToMilliseconds(env.ACCESS_TOKEN_TTL) });
   res.cookie("refreshToken", refreshToken, {
@@ -71,6 +81,46 @@ authRouter.post(
     applyAuthCookies(res, accessToken, refreshToken);
 
     res.json({ id: user.id, fullName: user.fullName, email: user.email, role: user.role });
+  })
+);
+
+authRouter.post(
+  "/signup",
+  asyncHandler(async (req, res) => {
+    const { email, fullName, password } = signupSchema.parse(req.body);
+
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      throw new HttpError(400, "Cet email est déjà utilisé.");
+    }
+
+    const passwordHash = await bcrypt.hash(password, 12);
+    const user = await prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
+        data: {
+          email,
+          fullName,
+          passwordHash,
+          role: Role.DRIVER
+        }
+      });
+
+      // Automatically create a base Driver profile for self-registered users
+      await tx.driver.create({
+        data: {
+          userId: newUser.id,
+          licenseNumber: `PENDING-${newUser.id.substring(0, 8)}`, // Placeholder until updated by admin/user
+        }
+      });
+
+      return newUser;
+    });
+
+    const accessToken = signAccessToken(user.id, user.role);
+    const refreshToken = signRefreshToken(user.id, user.role);
+    applyAuthCookies(res, accessToken, refreshToken);
+
+    res.status(201).json({ id: user.id, fullName: user.fullName, email: user.email, role: user.role });
   })
 );
 
