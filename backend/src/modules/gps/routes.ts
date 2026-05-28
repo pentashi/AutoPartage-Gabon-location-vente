@@ -5,6 +5,7 @@ import { z } from "zod";
 import { env } from "../../config/env";
 import { prisma } from "../../config/prisma";
 import { HttpError, asyncHandler } from "../../utils/http";
+import { GpsService } from "./gps.service";
 
 const commandSchema = z.object({
   idempotencyKey: z.string().min(8).max(120).optional(),
@@ -22,6 +23,74 @@ const ingestSchema = z.object({
 });
 
 const gpsRouter = Router();
+
+// --- External API Proxies (39gps.com) ---
+
+gpsRouter.get(
+  "/external/location",
+  asyncHandler(async (req, res) => {
+    const ids = req.query.ids as string;
+    if (!ids) throw new HttpError(400, "Device IDs required");
+    const data = await GpsService.getDeviceLocations(ids);
+    res.json(data);
+  })
+);
+
+gpsRouter.get(
+  "/external/playback",
+  asyncHandler(async (req, res) => {
+    const id = req.query.id as string;
+    const date = req.query.date as string;
+    if (!id) throw new HttpError(400, "Device ID required");
+    const data = await GpsService.getPlayback(id, date);
+    res.json(data);
+  })
+);
+
+gpsRouter.get(
+  "/external/alarms",
+  asyncHandler(async (req, res) => {
+    const id = req.query.id as string;
+    const rows = Number(req.query.rows || 10);
+    const page = Number(req.query.page || 1);
+    if (!id) throw new HttpError(400, "Device ID required");
+    const data = await GpsService.getAlarms(id, rows, page);
+    res.json(data);
+  })
+);
+
+gpsRouter.post(
+  "/external/command",
+  asyncHandler(async (req, res) => {
+    const { devId, cmdType, cmdCategory, cmdBody } = req.body;
+    if (!devId || !cmdType) throw new HttpError(400, "Missing parameters");
+    const data = await GpsService.sendCommand(devId, cmdType, cmdCategory, cmdBody);
+    res.json(data);
+  })
+);
+
+gpsRouter.get(
+  "/external/travel",
+  asyncHandler(async (req, res) => {
+    const id = req.query.id as string;
+    const date = req.query.date as string;
+    if (!id || !date) throw new HttpError(400, "ID and date required");
+    const data = await GpsService.getTravel(id, date);
+    res.json(data);
+  })
+);
+
+gpsRouter.get(
+  "/external/obd",
+  asyncHandler(async (req, res) => {
+    const id = req.query.id as string;
+    if (!id) throw new HttpError(400, "Device ID required");
+    const data = await GpsService.getObdData(id);
+    res.json(data);
+  })
+);
+
+// --- Local Data & Existing Logic ---
 
 gpsRouter.post(
   "/locations/ingest",

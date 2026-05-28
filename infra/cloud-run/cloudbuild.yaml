@@ -5,7 +5,7 @@ steps:
     args:
       - build
       - -t
-      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/autopartage/backend:$COMMIT_SHA
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/autopartage/backend:$_COMMIT_SHA
       - -t
       - ${_REGION}-docker.pkg.dev/$PROJECT_ID/autopartage/backend:latest
       - ./backend
@@ -17,22 +17,20 @@ steps:
     args:
       - -c
       - |
-        gcloud run services describe autopartage-backend \
-          --region=${_REGION} --format='value(status.url)' > backend_url.txt || echo "https://autopartage-backend-CHANGE_ME.a.run.app" > backend_url.txt
+        gcloud run services describe autopartage-backend --region=${_REGION} --format='value(status.url)' > backend_url.txt || echo "https://autopartage-backend-CHANGE_ME.a.run.app" > backend_url.txt
     waitFor: ['-']
 
   - id: build-frontend
     name: gcr.io/cloud-builders/docker
-    entrypoint: bash
+    entrypoint: /bin/bash
     args:
       - -c
-      - |
-        BACKEND_URL=$(cat backend_url.txt)
-        echo "Building frontend with NEXT_PUBLIC_API_URL=$$BACKEND_URL"
-        docker build \
-          --build-arg NEXT_PUBLIC_API_URL=$$BACKEND_URL \
-          -t ${_REGION}-docker.pkg.dev/$PROJECT_ID/autopartage/frontend:$COMMIT_SHA \
-          -t ${_REGION}-docker.pkg.dev/$PROJECT_ID/autopartage/frontend:latest \
+      - BACKEND_URL=$$(cat backend_url.txt) &&
+        docker build
+          --build-arg NEXT_PUBLIC_API_URL=$$BACKEND_URL
+          --build-arg NEXT_PUBLIC_BUILD_CMD="npx next build"
+          -t ${_REGION}-docker.pkg.dev/$PROJECT_ID/autopartage/frontend:$_COMMIT_SHA
+          -t ${_REGION}-docker.pkg.dev/$PROJECT_ID/autopartage/frontend:latest
           ./frontend
     waitFor: [get-backend-url]
 
@@ -61,7 +59,7 @@ steps:
       - run
       - deploy
       - autopartage-backend
-      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/autopartage/backend:$COMMIT_SHA
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/autopartage/backend:$_COMMIT_SHA
       - --region=${_REGION}
       - --platform=managed
       - --add-cloudsql-instances=$PROJECT_ID:${_REGION}:autopartage-db
@@ -85,22 +83,9 @@ steps:
       - -c
       - |
         set -e
-        BACKEND_URL=$(gcloud run services describe autopartage-backend \
-          --region=${_REGION} --format='value(status.url)')
+        BACKEND_URL=$(gcloud run services describe autopartage-backend --region=${_REGION} --format='value(status.url)')
         echo "Backend URL: $$BACKEND_URL"
-        gcloud run deploy autopartage-frontend \
-          --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/autopartage/frontend:$COMMIT_SHA \
-          --region=${_REGION} \
-          --platform=managed \
-          --service-account=autopartage-frontend@$PROJECT_ID.iam.gserviceaccount.com \
-          --set-env-vars="NODE_ENV=production,NEXT_PUBLIC_API_URL=$$BACKEND_URL" \
-          --memory=512Mi \
-          --cpu=1 \
-          --min-instances=0 \
-          --max-instances=10 \
-          --concurrency=50 \
-          --allow-unauthenticated \
-          --quiet
+        gcloud run deploy autopartage-frontend --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/autopartage/frontend:$_COMMIT_SHA --region=${_REGION} --platform=managed --service-account=autopartage-frontend@$PROJECT_ID.iam.gserviceaccount.com --set-env-vars="NODE_ENV=production,NEXT_PUBLIC_API_URL=$$BACKEND_URL" --memory=512Mi --cpu=1 --min-instances=0 --max-instances=10 --concurrency=50 --allow-unauthenticated --quiet
     waitFor: [push-frontend, deploy-backend]
 
   # ── 5. Smoke tests ────────────────────────────────────────────────────────────
@@ -111,10 +96,8 @@ steps:
       - -c
       - |
         set -e
-        BACKEND_URL=$(gcloud run services describe autopartage-backend \
-          --region=${_REGION} --format='value(status.url)')
-        FRONTEND_URL=$(gcloud run services describe autopartage-frontend \
-          --region=${_REGION} --format='value(status.url)')
+        BACKEND_URL=$(gcloud run services describe autopartage-backend --region=${_REGION} --format='value(status.url)')
+        FRONTEND_URL=$(gcloud run services describe autopartage-frontend --region=${_REGION} --format='value(status.url)')
 
         _wait_for_200() {
           local URL="$$1"
@@ -145,11 +128,11 @@ steps:
 
 substitutions:
   _REGION: europe-west1
+  _COMMIT_SHA: manual
   # Set this to your actual frontend Cloud Run URL after the first deployment.
   # On the very first deployment, leave empty; update the Cloud Build trigger
   # variable once you know the URL (gcloud run services describe autopartage-frontend).
-  _FRONTEND_ORIGIN: https://autopartage-frontend-CHANGE_ME.a.run.app
+  _FRONTEND_ORIGIN: https://autopartage-frontend-19378503105.europe-west1.run.app
 
 options:
   logging: CLOUD_LOGGING_ONLY
-

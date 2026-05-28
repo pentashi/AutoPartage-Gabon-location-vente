@@ -104,9 +104,30 @@ export const api = {
       body: JSON.stringify(payload)
     }),
   vehicles: () => request<Vehicle[]>("/vehicles"),
+  getVehicle: (id: string) => request<Vehicle>(`/vehicles/${id}`),
+  createVehicle: (payload: any) =>
+    request<Vehicle>("/vehicles", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
   drivers: () => request<Driver[]>("/drivers"),
+  createDriver: (payload: any) =>
+    request<Driver>("/drivers", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
   contracts: () => request<Contract[]>("/contracts"),
+  createContract: (payload: any) =>
+    request<Contract>("/contracts", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
   payments: () => request<Payment[]>("/payments"),
+  createPayment: (payload: any) =>
+    request<Payment>("/payments", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
   gpsLatestLocation: (vehicleId: string) => request<GpsLocation>(`/gps/vehicles/${vehicleId}/location/latest`),
   gpsImmobilize: (vehicleId: string, reason?: string) =>
     request<GpsCommand>(`/gps/vehicles/${vehicleId}/commands/immobilize`, {
@@ -118,7 +139,23 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ reason })
     }),
+  // External GPS API (39gps.com)
+  externalGpsLocation: (ids: string) => request<any>(`/gps/external/location?ids=${ids}`),
+  externalGpsPlayback: (id: string, date?: string) => request<any>(`/gps/external/playback?id=${id}${date ? `&date=${date}` : ""}`),
+  externalGpsAlarms: (id: string, rows?: number, page?: number) => request<any>(`/gps/external/alarms?id=${id}&rows=${rows || 10}&page=${page || 1}`),
+  externalGpsSendCommand: (payload: { devId: string; cmdType: string; cmdCategory: string; cmdBody: string }) =>
+    request<any>("/gps/external/command", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+  externalGpsTravel: (id: string, date: string) => request<any>(`/gps/external/travel?id=${id}&date=${date}`),
+  externalGpsObd: (id: string) => request<any>(`/gps/external/obd?id=${id}`),
   maintenanceTasks: () => request<MaintenanceTask[]>("/maintenance/tasks"),
+  createMaintenanceTask: (payload: any) =>
+    request<MaintenanceTask>("/maintenance/tasks", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
   updateMaintenanceStatus: (id: string, status: MaintenanceTask["status"]) =>
     request<MaintenanceTask>(`/maintenance/tasks/${id}/status`, {
       method: "PATCH",
@@ -126,6 +163,7 @@ export const api = {
     }),
   notifications: () => request<Notification[]>("/notifications"),
   markNotificationRead: (id: string) => request<Notification>(`/notifications/${id}/read`, { method: "PATCH" }),
+  markAllNotificationsRead: () => request<{ success: boolean; count: number }>("/notifications/read-all", { method: "PATCH" }),
   incidents: () => request<Incident[]>("/incidents"),
   createIncident: (payload: {
     title: string;

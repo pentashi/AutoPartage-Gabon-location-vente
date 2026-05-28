@@ -37,6 +37,25 @@ notificationsRouter.get(
 );
 
 notificationsRouter.patch(
+  "/read-all",
+  asyncHandler(async (req, res) => {
+    const adminRoles: Role[] = [Role.SUPER_ADMIN, Role.ADMIN, Role.ACCOUNTANT];
+    const isAdminView = adminRoles.includes(req.auth!.role);
+    const userId = isAdminView ? (req.query.userId as string ?? req.auth!.sub) : req.auth!.sub;
+
+    const result = await prisma.notification.updateMany({
+      where: {
+        userId,
+        isRead: false
+      },
+      data: { isRead: true, readAt: new Date() }
+    });
+
+    res.json({ success: true, count: result.count });
+  })
+);
+
+notificationsRouter.patch(
   "/:id/read",
   asyncHandler(async (req, res) => {
     const id = String(req.params.id);

@@ -6,10 +6,11 @@ RUN npm ci
 FROM node:20-alpine AS build
 WORKDIR /app
 ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_BUILD_CMD="npm run build"
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
+RUN $NEXT_PUBLIC_BUILD_CMD
 
 FROM node:20-alpine AS runtime
 WORKDIR /app

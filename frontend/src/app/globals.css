@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
 
 @theme inline {
   --color-background: var(--background);
@@ -20,64 +21,58 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
+  --color-slate-deep: var(--slate-deep);
+  --color-slate-elevated: var(--slate-elevated);
+  --color-emerald: var(--emerald);
+  --color-emerald-glow: var(--emerald-glow);
+  --radius-lg: 0.75rem;
+  --radius-md: 0.5rem;
+  --radius-sm: 0.25rem;
+}
+
+:root {
+  --background: oklch(0.18 0.02 250);
+  --foreground: oklch(0.98 0.005 250);
+  --slate-deep: oklch(0.14 0.02 250);
+  --slate-elevated: oklch(0.23 0.02 250);
+
+  --card: oklch(0.22 0.02 250);
+  --card-foreground: oklch(0.98 0.005 250);
+  --popover: oklch(0.22 0.02 250);
+  --popover-foreground: oklch(0.98 0.005 250);
+
+  /* Emerald primary */
+  --primary: oklch(0.68 0.16 152);
+  --primary-foreground: oklch(0.14 0.02 250);
+  --emerald: oklch(0.68 0.16 152);
+  --emerald-glow: oklch(0.78 0.18 152);
+
+  --secondary: oklch(0.28 0.02 250);
+  --secondary-foreground: oklch(0.98 0.005 250);
+  --muted: oklch(0.26 0.02 250);
+  --muted-foreground: oklch(0.7 0.02 250);
+  --accent: oklch(0.3 0.03 250);
+  --accent-foreground: oklch(0.98 0.005 250);
+  --destructive: oklch(0.6 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.68 0.16 152);
 }
 
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
+  * { @apply border-border; }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
   }
 }
+
+/* Utilities for landing page */
+.bg-emerald { background-color: var(--emerald); }
+.text-emerald { color: var(--emerald); }
+.text-primary-foreground { color: var(--primary-foreground); }
+.bg-\[image\:var\(--gradient-emerald\)\] { background-image: linear-gradient(135deg, var(--emerald), var(--emerald-glow)); }
+.shadow-\[var\(--shadow-emerald\)\] { box-shadow: 0 10px 40px -10px oklch(0.68 0.16 152 / 0.5); }
+.shadow-\[var\(--shadow-card\)\] { box-shadow: 0 10px 30px -10px oklch(0 0 0 / 0.5); }

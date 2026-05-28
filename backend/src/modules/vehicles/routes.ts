@@ -45,7 +45,20 @@ vehiclesRouter.get(
     const id = String(req.params.id);
     const vehicle = await prisma.vehicle.findUnique({
       where: { id },
-      include: { contracts: true, incidents: true }
+      include: { 
+        contracts: { 
+          include: { driver: { include: { user: { select: { fullName: true } } } } },
+          orderBy: { startDate: "desc" }
+        }, 
+        incidents: { 
+          include: { driver: { include: { user: { select: { fullName: true } } } } },
+          orderBy: { occurredAt: "desc" }
+        },
+        maintenanceTasks: { 
+          include: { assignedTo: { select: { fullName: true } } },
+          orderBy: { createdAt: "desc" }
+        }
+      }
     });
 
     res.json(vehicle);

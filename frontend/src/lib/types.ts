@@ -4,7 +4,7 @@ export enum Role {
   ACCOUNTANT = "ACCOUNTANT",
   DRIVER = "DRIVER",
   GARAGE = "GARAGE",
-  FLEET_MANAGER = "FLEET_MANAGER",
+  FLEET = "FLEET",
 }
 
 export type User = {
@@ -22,6 +22,9 @@ export type Vehicle = {
   plateNumber: string;
   year: number;
   status: "ACTIVE" | "IMMOBILIZED" | "MAINTENANCE";
+  contracts: Contract[];
+  incidents: Incident[];
+  maintenanceTasks: MaintenanceTask[];
 };
 
 export type Driver = {

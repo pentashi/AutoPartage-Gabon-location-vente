@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { Role } from "@/lib/types";
+import { useQuery } from "@tanstack/react-query";
 import { 
   LayoutDashboard, 
   Users, 
@@ -19,7 +20,8 @@ import {
   LogOut,
   ChevronLeft,
   Menu,
-  UserCircle
+  UserCircle,
+  User
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -92,6 +94,12 @@ const navLinks: NavLink[] = [
     icon: Bell,
     roles: [] // Available to everyone
   },
+  { 
+    href: "/dashboard/profile", 
+    label: "Mon profil", 
+    icon: User,
+    roles: [] // Available to everyone
+  },
 ];
 
 export function DashboardShell({ children }: { children: ReactNode }) {
@@ -99,6 +107,15 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { role, user, setUser } = useAuthStore();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const { data: notifications = [] } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: api.notifications,
+    refetchInterval: 30000, // Poll every 30 seconds
+  });
+
+  const unreadCount = notifications.filter(n => !n.isRead).length;
 
   const logout = async () => {
     try {
@@ -117,11 +134,20 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex h-screen bg-slate-50 font-sans">
+      {/* Mobile Backdrop */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm transition-opacity md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside 
         className={cn(
-          "relative flex flex-col border-r bg-white transition-all duration-300 ease-in-out",
-          isCollapsed ? "w-20" : "w-64"
+          "fixed inset-y-0 left-0 z-50 flex flex-col border-r bg-white transition-all duration-300 ease-in-out md:relative md:translate-x-0",
+          isCollapsed ? "w-20" : "w-64",
+          isMobileMenuOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full md:translate-x-0"
         )}
       >
         <div className="flex h-16 items-center border-b px-6">
@@ -129,7 +155,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-white shadow-lg shadow-primary/20">
               <Car className="h-5 w-5" />
             </div>
-            {!isCollapsed && (
+            {(!isCollapsed || isMobileMenuOpen) && (
               <span className="text-lg font-bold tracking-tight text-slate-900 truncate">
                 AutoPartage
               </span>
@@ -137,9 +163,15 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           </div>
           <button 
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="absolute -right-3 top-20 flex h-6 w-6 items-center justify-center rounded-full border bg-white text-slate-400 shadow-sm hover:text-slate-600"
+            className="absolute -right-3 top-20 hidden h-6 w-6 items-center justify-center rounded-full border bg-white text-slate-400 shadow-sm hover:text-slate-600 md:flex"
           >
             <ChevronLeft className={cn("h-4 w-4 transition-transform", isCollapsed && "rotate-180")} />
+          </button>
+          <button 
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="absolute right-4 top-5 flex h-6 w-6 items-center justify-center text-slate-400 md:hidden"
+          >
+            <ChevronLeft className="h-5 w-5" />
           </button>
         </div>
 
@@ -152,6 +184,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               <Link
                 key={link.href}
                 href={link.href}
+                onClick={() => setIsMobileMenuOpen(false)}
                 className={cn(
                   "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all group",
                   isActive 
@@ -161,14 +194,14 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 title={isCollapsed ? link.label : ""}
               >
                 <Icon className={cn("h-5 w-5 shrink-0", isActive ? "text-white" : "text-slate-400 group-hover:text-slate-600")} />
-                {!isCollapsed && <span>{link.label}</span>}
+                {(!isCollapsed || isMobileMenuOpen) && <span>{link.label}</span>}
               </Link>
             );
           })}
         </nav>
 
         <div className="border-t p-4 space-y-2">
-          {!isCollapsed && (
+          {(!isCollapsed || isMobileMenuOpen) && (
             <div className="mb-4 px-2 py-3 rounded-xl bg-slate-50 flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
                 {user?.fullName?.charAt(0) || "U"}
@@ -183,21 +216,26 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             onClick={logout}
             className={cn(
               "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-red-600 transition-all hover:bg-red-50",
-              isCollapsed && "justify-center px-0"
+              (isCollapsed && !isMobileMenuOpen) && "justify-center px-0"
             )}
             title={isCollapsed ? "Déconnexion" : ""}
           >
             <LogOut className="h-5 w-5 shrink-0" />
-            {!isCollapsed && <span>Déconnexion</span>}
+            {(!isCollapsed || isMobileMenuOpen) && <span>Déconnexion</span>}
           </button>
         </div>
       </aside>
 
       {/* Main Content */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="flex h-16 items-center justify-between border-b bg-white px-8">
+        <header className="flex h-16 items-center justify-between border-b bg-white px-4 md:px-8">
           <div className="flex items-center gap-4">
-             <Menu className="h-5 w-5 text-slate-400 md:hidden" />
+             <button 
+               onClick={() => setIsMobileMenuOpen(true)}
+               className="rounded-lg p-2 text-slate-400 hover:bg-slate-50 md:hidden"
+             >
+               <Menu className="h-5 w-5" />
+             </button>
              <div className="hidden md:block">
                 <p className="text-sm text-slate-500">
                   {new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
@@ -205,11 +243,28 @@ export function DashboardShell({ children }: { children: ReactNode }) {
              </div>
           </div>
           <div className="flex items-center gap-4">
-            <button className="relative rounded-full p-2 text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-all">
+            <Link 
+              href="/dashboard/notifications"
+              className="relative rounded-full p-2 text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-all"
+            >
               <Bell className="h-5 w-5" />
-              <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-            </button>
-            <div className="h-8 w-8 rounded-full bg-slate-100 border border-slate-200" />
+              {unreadCount > 0 && (
+                <span className="absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white animate-pulse">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </Link>
+            <Link
+              href="/dashboard/profile"
+              className="h-9 w-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-200 transition-all overflow-hidden"
+              title="Mon profil"
+            >
+              {user?.fullName ? (
+                <span className="text-xs font-bold">{user.fullName.split(' ').map(n => n[0]).join('')}</span>
+              ) : (
+                <User className="h-5 w-5 text-slate-400" />
+              )}
+            </Link>
           </div>
         </header>
         
