@@ -1,109 +1,207 @@
 # AutoPartage Gabon
+Enterprise web platform for vehicle rent-to-own operations, fleet control, finance, and incident response in Gabon.
 
-Plateforme de **location-vente de véhicules** avec suivi opérationnel, financier, maintenance et sécurité pour une flotte professionnelle au Gabon.
+![Build](https://img.shields.io/badge/build-Cloud%20Build-blue)
+![Version](https://img.shields.io/badge/version-0.1.0-informational)
+![License](https://img.shields.io/badge/license-ISC-green)
+![Coverage](https://img.shields.io/badge/coverage-not%20published-lightgrey)
 
-> Nom de projet recommandé : **autopartage-gabon-platform**  
-> (le dépôt GitHub actuel est `pentashi/cars`).
+## Overview
+AutoPartage Gabon provides an operational system for managing drivers, vehicles, contracts, payments, GPS actions, maintenance workflows, notifications, and incidents from one admin web application.
 
-## Vision
+It exists to replace fragmented manual workflows with auditable, role-based processes and API-driven integrations. It targets operations teams, fleet managers, accountants, administrators, and support stakeholders responsible for daily service continuity.
 
-Construire une plateforme unifiée pour :
-- gérer la flotte en temps réel,
-- piloter les contrats location-vente,
-- suivre les chauffeurs et leurs performances,
-- automatiser maintenance, alertes et immobilisations GPS,
-- centraliser finance, documents, audit et analytics.
+## Key Features
+- Manage the full rent-to-own lifecycle: driver onboarding, vehicle assignment, contracts, and payment tracking.
+- Monitor fleet status with GPS integration, including remote immobilization and release workflows.
+- Execute maintenance workflows with escalation-aware status tracking.
+- Handle incidents end-to-end with status transitions and role-scoped visibility.
+- Enforce role-based access control, JWT cookie auth, CSRF protection, and request rate limiting.
+- Deploy on GCP Cloud Run with Cloud SQL, Secret Manager, and Cloud Build automation.
 
-## Rôles principaux
+## Architecture Overview
+```text
+Next.js Frontend (Cloud Run / localhost:3000)
+          |
+          v
+Express + TypeScript API (Cloud Run / localhost:4000)
+          |
+          v
+PostgreSQL (Cloud SQL in production, Docker Postgres locally)
+```
 
-- **Super Admin / Admin principal**
-- **Flotte**
-- **Comptable**
-- **Chauffeur**
-- **Garage**
+Repository structure:
+- `/frontend`: Next.js admin web app
+- `/backend`: Express API + Prisma + business modules
+- `/infra`: Docker and GCP Cloud Run deployment assets
+- `/docs/mvp`: MVP scope, rules, integrations, and go-live documentation
 
-## Modules produit
+## Prerequisites
+- Node.js 20+
+- npm 10+
+- Docker + Docker Compose (for local PostgreSQL/full-stack containers)
+- GCP CLI (`gcloud`) for Cloud Run deployments
 
-- Vue d’ensemble (dashboard global)
-- Chauffeurs
-- Contrats
-- Flotte / Véhicules
-- GPS temps réel (incluant immobilisation à distance)
-- Maintenance & rappels
-- Finance & versements
-- Boutique / Services
-- Garages
-- Incidents
-- Notifications
-- Documents
-- Analytics
-- Sécurité & Audit
+## Installation & Quick Start
+```bash
+git clone https://github.com/pentashi/AutoPartage-Gabon-location-vente.git
+cd AutoPartage-Gabon-location-vente
 
-## Aperçu fonctionnel (données fournies)
+# 1) Start PostgreSQL locally
+docker compose up -d postgres
 
-- **Véhicules actifs** : 120 (97 en circulation, 8 immobilisés)
-- **Chauffeurs** : 118
-- **Revenus (mai)** : 78,0M FCFA
-- **Taux de recouvrement** : 89%
-- **Alertes actives** : 21
+# 2) Backend setup
+cd backend
+npm install
+cat > .env <<'ENV'
+NODE_ENV=development
+PORT=4000
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/autopartage
+JWT_ACCESS_SECRET=dev-access-secret
+JWT_REFRESH_SECRET=dev-refresh-secret
+ACCESS_TOKEN_TTL=15m
+REFRESH_TOKEN_TTL=7d
+FRONTEND_ORIGIN=http://localhost:3000
+GPS_COMMAND_TIMEOUT_MS=120000
+MAINTENANCE_AUTO_IMMOBILIZATION_MIN_ESCALATION=3
+ENV
+npm run prisma:generate
+npm run prisma:migrate
+npm run dev
+```
 
-Cas clés déjà décrits :
-- Immobilisation automatique en cas d’impayé
-- Déblocage admin après paiement
-- Rappels maintenance par date/km
-- Alertes assurance / visite technique
-- Suivi des contrats (actif, retard, suspendu, résilié)
+Open a new terminal for the frontend:
+```bash
+cd frontend
+npm install
+cat > .env.local <<'ENV'
+NEXT_PUBLIC_API_URL=http://localhost:4000
+ENV
+npm run dev
+```
 
-## Roadmap
+## Configuration
+| Name | Type | Default | Description |
+|---|---|---|---|
+| `NODE_ENV` | `development \| test \| production` | `development` | Backend runtime mode. |
+| `PORT` | `number` | `4000` | Backend HTTP port. |
+| `DATABASE_URL` | `string` | none | PostgreSQL connection string used by Prisma. |
+| `JWT_ACCESS_SECRET` | `string` | none | Access token signing key. |
+| `JWT_REFRESH_SECRET` | `string` | none | Refresh token signing key and session secret. |
+| `ACCESS_TOKEN_TTL` | `string` | `15m` | Access token lifetime (ms-compatible format). |
+| `REFRESH_TOKEN_TTL` | `string` | `7d` | Refresh token lifetime (ms-compatible format). |
+| `FRONTEND_ORIGIN` | `string` | `http://localhost:3000` | Allowed CORS origin for backend. |
+| `GPS_API_KEY` | `string` | none | Optional API key for external GPS provider integration. |
+| `GPS_COMMAND_TIMEOUT_MS` | `number` | `120000` | Timeout for GPS command workflows in milliseconds. |
+| `MAINTENANCE_AUTO_IMMOBILIZATION_MIN_ESCALATION` | `number` | `3` | Escalation threshold before auto-immobilization logic. |
+| `NEXT_PUBLIC_API_URL` | `string` | `http://localhost:4000` | Frontend base URL for API calls. |
+| `_REGION` | `string` | `europe-west1` | Cloud Build substitution for deployment region. |
+| `_FRONTEND_ORIGIN` | `string` | `https://autopartage-frontend-CHANGE_ME.a.run.app` | Cloud Build substitution for production frontend origin. |
 
-- **Phase 1 — Terminée** : Auth, Chauffeurs, Véhicules, Contrats, Paiements
-- **Phase 2 — MVP figé** : GPS, Maintenance, Notifications (spécifications prêtes)
-- **Phase 3 — Planifiée** : Boutique, Garages, Protection sociale
-- **Phase 4 — IA** : Score risque, Analytics avancé, IA prédictive
+## Usage Examples
+Health check:
+```bash
+curl -sS http://localhost:4000/health
+```
 
-## Documentation MVP Phase 2
+Authenticate and persist cookies:
+```bash
+# 1) Get CSRF token + session cookie
+curl -sS -c cookies.txt http://localhost:4000/auth/csrf-token
 
-- Dossier de finalisation: [`docs/mvp/README.md`](./docs/mvp/README.md)
-- Périmètre figé: [`docs/mvp/01-mvp-scope.md`](./docs/mvp/01-mvp-scope.md)
-- Règles métier: [`docs/mvp/02-business-rules.md`](./docs/mvp/02-business-rules.md)
-- Intégrations: [`docs/mvp/03-integrations.md`](./docs/mvp/03-integrations.md)
-- Données/API: [`docs/mvp/04-data-api.md`](./docs/mvp/04-data-api.md)
-- UX opérationnelle: [`docs/mvp/05-ux-operations.md`](./docs/mvp/05-ux-operations.md)
-- Go-live GCP: [`docs/mvp/06-gcp-go-live.md`](./docs/mvp/06-gcp-go-live.md)
-- Recette finale: [`docs/mvp/07-final-recipe.md`](./docs/mvp/07-final-recipe.md)
+# 2) Login (replace credentials and csrf token)
+CSRF_TOKEN="REPLACE_WITH_TOKEN_FROM_STEP_1"
+curl -sS -b cookies.txt -c cookies.txt \
+  -H "Content-Type: application/json" \
+  -H "x-csrf-token: ${CSRF_TOKEN}" \
+  -X POST http://localhost:4000/auth/login \
+  -d '{"email":"admin@example.com","password":"StrongPass123"}'
+```
 
-## Informations à compléter (sections manquantes à partager)
+Create a vehicle with an authenticated session:
+```bash
+CSRF_TOKEN="REPLACE_WITH_CURRENT_TOKEN"
+curl -sS -b cookies.txt -c cookies.txt \
+  -H "Content-Type: application/json" \
+  -H "x-csrf-token: ${CSRF_TOKEN}" \
+  -X POST http://localhost:4000/vehicles \
+  -d '{"registrationNumber":"GA-123-AA","brand":"Toyota","model":"Hilux"}'
+```
 
-Pour finaliser le cadrage produit et technique, il manque surtout :
+## API Reference
+Base URL (local): `http://localhost:4000`
 
-1. **Périmètre MVP exact**
-   - fonctionnalités obligatoires au lancement vs plus tard.
-2. **Règles métier détaillées**
-   - formule score risque, logique de suspension, seuils immobilisation.
-3. **Processus financiers**
-   - moyens de paiement, rapprochement, pénalités, échéanciers, relances.
-4. **Spécifications GPS**
-   - fournisseur tracker/API, fréquence remontée, zones blanches, commandes à distance.
-5. **Maintenance**
-   - types d’interventions, SLA garage, validation coûts, workflow avant/après photos.
-6. **Gestion documentaire**
-   - types de documents, expirations, signature, archivage.
-7. **Sécurité & conformité**
-   - matrice de permissions par rôle, journal d’audit, politique de conservation.
-8. **Intégrations externes**
-   - CNSS/CNAMGS, mobile money, SMS/WhatsApp/email, cartographie.
-9. **Applications cibles**
-   - web admin seulement ou aussi app chauffeur/garage (iOS/Android).
-10. **Exigences non-fonctionnelles**
-    - performance, disponibilité, sauvegarde, reprise incident, multi-agence.
+Authentication:
+- `GET /auth/csrf-token`
+- `POST /auth/login`
+- `POST /auth/signup`
+- `POST /auth/refresh`
+- `POST /auth/logout`
 
-## Priorité recommandée (prochaine étape)
+Core modules (authenticated, role-gated):
+- `/dashboard`
+- `/users`
+- `/vehicles`
+- `/drivers`
+- `/contracts`
+- `/payments`
+- `/gps`
+- `/incidents`
+- `/maintenance`
+- `/notifications`
 
-1. Valider MVP (fonctionnel + rôles + flux critiques).
-2. Figer le dictionnaire de données (chauffeur, véhicule, contrat, versement, incident).
-3. Définir les API/integrations critiques (GPS, paiements, notifications).
-4. Finaliser maquettes UX par module.
+Health:
+- `GET /health`
 
-## Licence
+## Testing
+Backend:
+```bash
+cd backend
+npm run prisma:generate
+npm run lint
+npm run build
+npm run test
+```
 
-À définir.
+Frontend:
+```bash
+cd frontend
+npm run lint
+npm run build
+```
+
+## Deployment
+Production deployment uses GCP Cloud Run with Cloud Build orchestration and Cloud SQL PostgreSQL.
+
+Primary path:
+```bash
+chmod +x infra/setup.sh
+./infra/setup.sh
+
+gcloud builds submit --config=infra/cloud-run/cloudbuild.yaml \
+  --substitutions=_REGION=europe-west1,_FRONTEND_ORIGIN=https://your-frontend-url.a.run.app
+```
+
+Production considerations:
+- Keep `DATABASE_URL`, `JWT_ACCESS_SECRET`, and `JWT_REFRESH_SECRET` in Secret Manager.
+- Run forward-only Prisma migrations (`prisma migrate deploy`) during startup.
+- Validate backend (`/health`) and frontend (`/`) after each deployment.
+- Use Cloud Run revision traffic controls for rollback.
+
+## Contributing
+1. Create a short-lived branch from `main` (`feat/*`, `fix/*`, `chore/*`).
+2. Keep changes scoped to one objective.
+3. Run backend/frontend validation commands before opening a PR.
+4. Open a PR with clear scope, risk notes, and test evidence.
+5. Require review approval before merge to `main`.
+
+Code standards:
+- Backend: TypeScript + Prisma, strict type checks via `npm run lint`.
+- Frontend: Next.js + TypeScript + ESLint.
+- Prefer small, auditable commits and explicit configuration changes.
+
+## Security
+Report vulnerabilities privately to repository maintainers. Include impact, reproduction steps, and affected components. Do not open public issues for exploitable security defects.
+
+## License
+ISC
